@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Конструктор урока Scaffold</title>
+<style>
+[hidden]{display:none!important}
+body{margin:0}
+/* Layout: left rail of 9 numbered Scaffold steps + working panel; the board view mirrors the physical card layout. */
+:root{
+  --bg:#EEF0F3; --surface:#FFFFFF; --surface-2:#F6F7F9; --ink:#1A202B; --muted:#5D6574; --line:#D8DCE3;
+  --accent:#0C8A87; --accent-ink:#FFFFFF; --accent-soft:#DDF1F0;
+  --sticky:#FFF4C2; --sticky-line:#E9D98A; --sticky-ink:#3B3416;
+  --dig:#E8502C; --dig2:#F27A1F; --ent:#7E1B83; --ent2:#C3168F; --grn:#1EA772; --grn2:#4DBB4F; --life:#8DBB12; --life2:#B5D41C; --tr:#0FA2A6; --tr2:#2CBF86;
+  --ok:#1F8A4C; --warn:#B26B00; --warn-soft:#FFF0D6; --danger:#B42318;
+  --f-display:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --f-body:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --f-mono:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace;
+  --r:10px; --shadow:0 1px 2px rgba(20,30,50,.06),0 4px 14px rgba(20,30,50,.06);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161C; --surface:#1A1F27; --surface-2:#20262F; --ink:#E6E9EE; --muted:#9AA2B0; --line:#2E3540;
+  --accent:#36C2BD; --accent-ink:#06201F; --accent-soft:#163533;
+  --sticky:#3A3420; --sticky-line:#5A4F2A; --sticky-ink:#F3E9BE;
+  --ok:#4CC27E; --warn:#F0A940; --warn-soft:#3A2C12; --danger:#F07167;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161C; --surface:#1A1F27; --surface-2:#20262F; --ink:#E6E9EE; --muted:#9AA2B0; --line:#2E3540;
+  --accent:#36C2BD; --accent-ink:#06201F; --accent-soft:#163533;
+  --sticky:#3A3420; --sticky-line:#5A4F2A; --sticky-ink:#F3E9BE;
+  --ok:#4CC27E; --warn:#F0A940; --warn-soft:#3A2C12; --danger:#F07167;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0}
+.app{display:grid;grid-template-columns:268px minmax(0,1fr);min-height:100%}
+/* top bar */
+.top{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--line);z-index:20}
+.brand{font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:.02em;display:flex;align-items:center;gap:10px;white-space:nowrap}
+.brand-mark{display:grid;grid-template-columns:repeat(2,9px);gap:2px}
+.brand-mark i{width:9px;height:9px;border-radius:2px;display:block}
+.lesson-pick{display:flex;gap:8px;align-items:center;flex:1 1 320px;min-width:0;flex-wrap:wrap}
+.lesson-pick select{flex:1 1 200px;min-width:0;max-width:420px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);border-color:var(--line)}
+.btn.danger{color:var(--danger)}
+.btn.small{padding:4px 9px;font-size:13px}
+.save-state{font-size:12px;color:var(--muted)}
+/* rail */
+.rail{background:var(--surface);border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:env(safe-area-inset-top,0px);align-self:start;max-height:100vh;overflow:auto}
+.rail-h{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:6px 10px 8px;font-weight:600}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.step-btn{width:100%;text-align:left;display:grid;grid-template-columns:30px 1fr 12px;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;border:0;background:transparent;cursor:pointer}
+.step-btn:hover{background:var(--surface-2)}
+.step-btn.on{background:var(--accent-soft)}
+.step-num{width:30px;height:30px;border-radius:7px;border:1.5px solid var(--line);display:grid;place-items:center;font-family:var(--f-mono);font-size:12px;font-weight:700;color:var(--muted);background:var(--surface)}
+.step-btn.on .step-num{border-color:var(--accent);color:var(--accent)}
+.step-btn.done .step-num{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.step-t{font-size:14px;font-weight:600;line-height:1.25}
+.step-s{display:block;font-size:12px;color:var(--muted);font-weight:400}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.dot.ok{background:var(--ok)}
+.rail-foot{margin-top:14px;padding:12px 10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+/* main */
+main{padding-block:24px 64px;padding-inline:28px;min-width:0}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.head{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.head h1{font-family:var(--f-display);font-weight:700;font-size:clamp(22px,2.6vw,30px);line-height:1.15}
+.lead{color:var(--muted);max-width:70ch;margin:0}
+.pcard{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;max-width:760px}
+.pcard .no{font-family:var(--f-display);font-size:26px;font-weight:700;color:var(--accent);line-height:1}
+.pcard .lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pcard .q{font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel h2{font-size:16px;font-weight:700}
+.hint{font-size:13px;color:var(--muted)}
+.note{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:var(--warn-soft);color:var(--ink);font-size:13.5px}
+.note b{color:var(--warn)}
+.nav-row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:4px}
+/* task cards with stickies */
+.head-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.tcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tcard .tt{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.tcard .tq{font-weight:600;line-height:1.35}
+.tcard .tn{font-size:12.5px;color:var(--muted)}
+.sticky{width:100%;min-height:86px;resize:vertical;border:1px solid var(--sticky-line);background:var(--sticky);color:var(--sticky-ink);border-radius:4px;padding:10px 12px;line-height:1.45;box-shadow:0 2px 0 var(--sticky-line)}
+.sticky::placeholder{color:var(--sticky-ink);opacity:.55}
+.dur-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dur-row input{width:110px;padding:8px 10px;border:1px solid var(--sticky-line);background:var(--sticky);color:var(--sticky-ink);border-radius:4px;font-family:var(--f-mono)}
+.chip-btn{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:13px}
+.chip-btn:hover{border-color:var(--accent)}
+.chip-btn.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:600;font-size:14px}
+.input,.area{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.area{min-height:80px;resize:vertical}
+/* board */
+.board{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:10px;overflow-x:auto;padding-bottom:6px}
+.bcol{display:flex;flex-direction:column;gap:8px;min-width:150px}
+.bhead{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:2px}
+.bhead:hover{border-color:var(--accent)}
+.bhead .n{font-family:var(--f-display);font-weight:700;color:var(--accent);font-size:18px}
+.bhead .t{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;line-height:1.25}
+.bitem{font-size:12.5px;padding:7px 9px;border-radius:6px;background:var(--surface);border:1px solid var(--line);line-height:1.3}
+.bitem.st{background:var(--sticky);border-color:var(--sticky-line);color:var(--sticky-ink)}
+.bitem.empty{background:transparent;border-style:dashed;color:var(--muted)}
+.bitem .code{font-family:var(--f-mono);font-weight:700;font-size:11px;margin-right:4px}
+.tasks-strip{display:flex;flex-wrap:wrap;gap:8px}
+.tasks-strip .bitem{max-width:260px}
+/* competence library */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar .input{max-width:260px}
+.fw-chip{display:inline-flex;align-items:center;gap:6px}
+.fw-chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.sym-row{display:flex;flex-wrap:wrap;gap:6px}
+.sym-btn{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 7px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:12.5px;color:var(--ink)}
+.sym-btn svg{color:var(--tr)}
+.sym-btn.on{border-color:var(--tr);background:var(--accent-soft)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.ccard{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-width:0;transition:box-shadow .15s,border-color .15s}
+.ccard.sel{border-color:var(--c1);box-shadow:0 0 0 2px var(--c1)}
+.ccard.flash{animation:flash 1.2s ease}
+@keyframes flash{0%,60%{box-shadow:0 0 0 4px var(--accent)}100%{box-shadow:none}}
+.cband{background:linear-gradient(120deg,var(--c1),var(--c2));color:#fff;padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;min-height:92px}
+.cband.lite{color:#1C2A05}
+.ctop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.cname{font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;line-height:1.25}
+.ccode{font-family:var(--f-mono);font-weight:700;font-size:13px;white-space:nowrap}
+.cfw{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;font-weight:600}
+.cbody{padding:12px 14px;display:flex;flex-direction:column;gap:10px;flex:1}
+.cint{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px}
+.cint .lab{color:var(--muted);margin-right:2px}
+.code-chip{font-family:var(--f-mono);font-size:11.5px;font-weight:700;padding:2px 6px;border-radius:5px;border:1px solid var(--line);background:var(--surface-2);cursor:pointer;color:var(--ink)}
+.code-chip:hover{border-color:var(--accent)}
+.code-chip.hit{background:var(--accent-soft);border-color:var(--accent)}
+.csyms{display:flex;gap:4px;color:var(--tr)}
+.cdesc{font-size:13.5px}
+.chint{font-size:13px;font-style:italic;padding:8px 10px;border-radius:6px;background:var(--surface-2);border-left:3px solid var(--c1)}
+.cfoot{padding:0 14px 14px}
+.sel-btn{width:100%;justify-content:center}
+.ccard.sel .sel-btn{background:var(--c1);border-color:var(--c1);color:#fff}
+.ccard.sel.lite .sel-btn{color:#1C2A05}
+.tray{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 8px;border-radius:7px;font-size:13px;color:#fff;background:linear-gradient(120deg,var(--c1),var(--c2));max-width:100%}
+.tag.lite{color:#1C2A05}
+.tag .code{font-family:var(--f-mono);font-weight:700;font-size:12px}
+.tag button{border:0;background:rgba(0,0,0,.18);color:inherit;border-radius:5px;width:20px;height:20px;cursor:pointer;line-height:1;display:grid;place-items:center}
+.reco{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.reco .code-chip .cnt{font-weight:500;color:var(--muted);margin-left:3px}
+.trans-legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.tl{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--muted)}
+.tl svg{flex:none;color:var(--tr);margin-top:2px}
+.tl b{color:var(--ink);display:block;font-size:13px}
+details.more summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
+/* method cards */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.mcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.mcard.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.mhead{padding:14px 16px 10px;display:flex;flex-direction:column;gap:4px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.mhead .k{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.mhead h3{font-size:15px;text-transform:uppercase;letter-spacing:.03em;line-height:1.3}
+.mbody{padding:12px 16px;display:flex;flex-direction:column;gap:10px;font-size:13.5px;flex:1}
+.mbody ol,.mbody ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
+.mfoot{padding:0 16px 14px;display:flex;gap:8px;flex-wrap:wrap}
+.badge{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--accent-soft);color:var(--accent);letter-spacing:.03em}
+/* lists */
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:8px;align-items:center}
+.row .input{flex:1;min-width:0}
+.check{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.check input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);flex:none}
+.check .input{background:transparent;border:0;padding:2px 0}
+.check.done .input{text-decoration:line-through;color:var(--muted)}
+.icon-btn{border:0;background:transparent;color:var(--muted);cursor:pointer;width:28px;height:28px;border-radius:6px;flex:none}
+.icon-btn:hover{color:var(--danger);background:var(--surface)}
+/* timeline */
+.tl-wrap{overflow-x:auto}
+table.tline{width:100%;border-collapse:separate;border-spacing:0;min-width:1040px}
+.tline th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-weight:700}
+.tline td{padding:6px 4px;vertical-align:top;border-bottom:1px solid var(--line)}
+.tline textarea,.tline input{width:100%;border:1px solid transparent;background:transparent;border-radius:6px;padding:6px;resize:vertical;min-height:38px;line-height:1.4}
+.tline textarea:hover,.tline input:hover,.tline textarea:focus,.tline input:focus{border-color:var(--line);background:var(--surface-2)}
+.tline .min{font-family:var(--f-mono);font-variant-numeric:tabular-nums;width:64px}
+.tline .clock{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap;padding-top:13px;font-variant-numeric:tabular-nums}
+.tbar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line)}
+.tbar span{display:block;height:100%;border-right:1px solid var(--surface)}
+.sum{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:14px}
+.pill{font-family:var(--f-mono);font-size:12.5px;font-weight:700;padding:3px 9px;border-radius:999px;font-variant-numeric:tabular-nums}
+.pill.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+/* plan doc */
+.doc{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:clamp(18px,4vw,40px);display:flex;flex-direction:column;gap:22px;max-width:900px}
+.doc h2.dt{font-family:var(--f-display);font-size:22px;font-weight:700}
+.doc h3{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:8px}
+.kv{display:grid;grid-template-columns:200px minmax(0,1fr);gap:6px 16px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;white-space:pre-wrap}
+.doc table{width:100%;border-collapse:collapse;font-size:13.5px}
+.doc table.p130 th{width:22%;text-align:left;font-size:13px}
+.appx{border-top:2px solid var(--line);padding-top:18px}
+.doc th,.doc td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top;white-space:pre-wrap}
+.doc th{background:var(--surface-2);font-size:12px}
+.doc .tbl{overflow-x:auto}
+.empty-v{color:var(--muted);font-style:italic}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:14px;z-index:50;box-shadow:var(--shadow)}
+.modal-bg{position:fixed;inset:0;background:rgba(10,14,20,.45);display:grid;place-items:center;z-index:40;padding:16px}
+.modal{background:var(--surface);border-radius:12px;padding:20px;max-width:560px;width:100%;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+.modal textarea{min-height:180px;font-family:var(--f-mono);font-size:12px}
+.example-flag{font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--warn-soft);color:var(--warn)}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px 12px}
+  .rail-h,.rail-foot{display:none}
+  .steps{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:4px}
+  .steps li{flex:none}
+  .step-btn{grid-template-columns:26px auto;padding:6px 8px}
+  .step-btn .dot{display:none}
+  .step-num{width:26px;height:26px}
+  .step-s{display:none}
+  main{padding-inline:16px}
+  .top{position:static;padding-inline:16px}
+  .kv{grid-template-columns:minmax(0,1fr)}
+  .kv dt{font-weight:600;color:var(--ink);margin-top:6px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><i style="background:var(--dig)"></i><i style="background:var(--ent2)"></i><i style="background:var(--grn)"></i><i style="background:var(--life)"></i></span>Scaffold · конструктор урока</div>
+    <div class="lesson-pick">
+      <label for="lessonSel" class="hint">Урок:</label>
+      <select id="lessonSel"></select>
+      <button class="btn small" id="newBtn" type="button">+ Новый урок</button>
+      <button class="btn small ghost" id="dupBtn" type="button">Копия</button>
+      <button class="btn small ghost" id="ioBtn" type="button">Резервная копия</button>
+      <button class="btn small primary" id="wordTop" type="button">Скачать в Word</button>
+      <button class="btn small ghost danger" id="delBtn" type="button">Удалить</button>
+    </div>
+    <span class="save-state" id="saveState"></span>
+  </header>
+  <nav class="rail" aria-label="Шаги">
+    <div class="rail-h">9 шагов Scaffold</div>
+    <ol class="steps" id="steps"></ol>
+    <div class="rail-foot">Порядок шагов взят из УММ курса «Проектирование учебных занятий с применением инструмента Scaffold». Шаги не директивны: возвращайтесь к любому из них.<br><br>Приложение работает без интернета. Уроки сохраняются в этом браузере на этом компьютере.</div>
+  </nav>
+  <main><div class="wrap" id="main"></div></main>
+</div>
+
+<script>
+/* ===================== DATA (карточки Scaffold) ===================== */
+const SYM = {
+  CT:{n:"Критическое мышление",d:"Концептуализация, анализ, синтез и оценка информации для выработки обоснованных выводов, создания инновационных решений или принятия мер."},
+  PS:{n:"Решение проблем",d:"Размышление, понимание и решение сложных проблем или ситуаций, когда нет быстрого решения."},
+  TW:{n:"Работа в команде",d:"Оперативная и эффективная работа и взаимодействие в группе, созданной разными людьми, для достижения общих или совместных целей."},
+  CN:{n:"Коммуникация и переговоры",d:"Эффективное донесение информации и идей различным аудиториям. Установление диалога и совместная работа с другими сторонами для достижения приемлемого решения для всех участников."},
+  AN:{n:"Аналитические навыки",d:"Разделение информации и данных на более простые и управляемые компоненты для получения выводов."},
+  CR:{n:"Креативность",d:"Формирование креативных и целенаправленных идей для создания ценных результатов."},
+  IC:{n:"Межкультурное общение",d:"Эффективное и соответствующее взаимодействие в различных межкультурных ситуациях, мобилизация соответствующих установок, знаний, навыков и ценностей."}
+};
+function symSvg(k,s=16){
+  const a=`width="${s}" height="${s}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"`;
+  const p={
+    CT:'<path d="M10 2.2l2.3 5 5.4.5-4.1 3.6 1.2 5.3L10 13.9l-4.8 2.7 1.2-5.3L2.3 7.7l5.4-.5z"/>',
+    PS:'<circle cx="10" cy="10" r="7.2"/>',
+    TW:'<path d="M7 2.8h6v4.2h4.2v6H13v4.2H7V13H2.8V7H7z" transform="rotate(45 10 10)"/>',
+    CN:'<path d="M6 3.2h8l4 6.8-4 6.8H6L2 10z"/>',
+    AN:'<rect x="3.3" y="3.3" width="13.4" height="13.4" rx="1"/>',
+    CR:'<path d="M10 16.8S2.8 12.4 2.8 7.6A3.9 3.9 0 0 1 10 5.7a3.9 3.9 0 0 1 7.2 1.9c0 4.8-7.2 9.2-7.2 9.2z"/>',
+    IC:'<path d="M10 3l7.6 13.4H2.4z"/>'
+  };
+  return `<svg ${a}>${p[k]}</svg>`;
+}
+const FW = {
+  d:{n:"Цифровые компетенции",s:"DigComp",c1:"var(--dig)",c2:"var(--dig2)"},
+  e:{n:"Предпринимательские компетенции",s:"EntreComp",c1:"var(--ent)",c2:"var(--ent2)"},
+  g:{n:"Компетенции в области устойчивого развития",s:"GreenComp",c1:"var(--grn)",c2:"var(--grn2)"},
+  l:{n:"Личностные, социальные и «Умение обучаться»",s:"LifeComp",c1:"var(--life)",c2:"var(--life2)",lite:true}
+};
+// [code, name, integration, description, hint, symbols]
+const C = [
+["d.1","Поиск информации и цифрового контента","e.1 g.5","Разработка индивидуальных стратегий для определения информационных потребностей, поиск информации в цифровой среде.","Найдите информацию по теме в Интернете.","CT AN"],
+["d.2","Оценка цифрового контента","g.5","Критическая оценка источников данных и контента.","Определите источник информации для выявления и проверки фейковых новостей.","CT AN"],
+["d.3","Управление цифровым контентом","e.12","Организация, хранение и извлечение данных, информации и контента в цифровой среде.","Организуйте цифровые файлы в логическую структуру.","PS AN"],
+["d.4","Взаимодействие с помощью цифровых технологий","e.14 g.11 l.5 l.6","Использование различных цифровых технологий и понимание того, какие средства цифровой коммуникации подходят для конкретного контекста.","Выберите и используйте цифровые инструменты, соответствующие целям и контексту.","CN TW"],
+["d.5","Обмен информацией с помощью цифровых технологий","e.14","Обмен данными, информацией и цифровым контентом. Предоставление ссылок и указание авторства.","Поделитесь актуальным контентом с указанием авторства.","CN TW AN"],
+["d.6","Вовлечение в общественную жизнь с помощью цифровых технологий","g.10 g.11 g.12","Использование государственных и частных цифровых сервисов для расширения своих возможностей и участия в жизни общества в качестве гражданина.","Используйте цифровые технологии, чтобы ответственно вносить свой вклад и уважительно участвовать в жизни сообщества.","CR IC"],
+["d.7","Сотрудничество в цифровом формате","e.8 e.14 g.11 l.6","Совместное использование цифровых инструментов и технологий для создания ресурсов и расширения знаний.","Работайте совместно над проектом, используя цифровые инструменты.","CN TW PS"],
+["d.8","Сетевой этикет","l.1 l.5 l.6","Адаптация стратегий личной коммуникации к конкретной аудитории и учет разнообразия в цифровой среде.","Относитесь к людям в сети с уважением и вниманием.","CN TW IC"],
+["d.9","Управление цифровой идентичностью","l.1 l.3","Создание и управление цифровыми идентификаторами и цифровыми следами.","Изучите свои цифровые профили для защиты конфиденциальности и репутации.",""],
+["d.10","Разработка цифрового контента","e.2","Создание и редактирование цифрового контента в различных форматах, выражение с помощью цифровых средств.","Создайте цифровой продукт для выполнения задачи или самовыражения.","CR"],
+["d.11","Переработка цифрового контента","e.1 e.2","Модификация и интеграция информации/изображений/данных в существующий цифровой файл для создания нового и актуального контента.","Поработайте над чужим контентом с целью его обновления или улучшения.","PS CR"],
+["d.12","Авторское право и лицензии","e.4","Понимание того, как авторское право и лицензии применяются к данным, информации и цифровому контенту.","Проверьте необходимость получения разрешения на использование внешнего контента и примените соответствующее разрешение к своей работе.",""],
+["d.13","Программирование","e.2 g.6 g.9","Разработка инструкций для вычислительной системы с целью решения поставленной проблемы или выполнения конкретной задачи.","Создайте программу для выполнения задания или самовыражения.","PS AN CR"],
+["d.14","Защита устройств","e.12 l.8","Защита устройств и цифрового контента, понимание рисков и мер безопасности, использование соответствующих мер безопасности.","Используйте меры безопасности для защиты цифровых устройств и контента.","CT"],
+["d.15","Защита персональных данных","l.3 l.8","Защита персональных данных и конфиденциальности в цифровой среде, понимание того, что цифровые сервисы используют «Политику конфиденциальности» для информирования о том, как используются персональные данные.","Определите свои права и обязанности, связанные с персональными данными.","CT"],
+["d.16","Защита здоровья и благополучия","g.3 l.3 l.8","Предотвращение угроз физическому, психологическому и социальному благополучию при использовании цифровых технологий.","Разработайте рекомендации по использованию цифровых технологий для поддержки собственного физического, психологического и социального благополучия.","CT AN"],
+["d.17","Защита окружающей среды","g.3","Понимание воздействия цифровых устройств, технологий и их использования на окружающую среду.","Определите воздействие цифровых технологий на окружающую среду.","CT"],
+["d.18","Решение технических проблем","g.6","Выявление технических проблем в устройствах и цифровых средах и их решение.","Выявите общие технические проблемы и создайте руководство по их решению.","CT AN CR"],
+["d.19","Определение потребностей и технологических решений","e.1 e.2 g.6 g.9","Использование и настройка цифровых инструментов и среды для удовлетворения выявленных потребностей и обеспечения доступности.","Выявите потребность и найдите или предложите цифровой инструмент для ее решения.","PS AN CR"],
+["d.20","Креативное использование цифровых технологий","e.1 e.2 g.6 g.9","Использование цифровых технологий для генерации знаний, инновационных процессов и продуктов. Понимание и решение проблем в цифровой среде.","Используйте цифровые технологии для выражения своих идей или создания ценностей.","PS AN CR"],
+["d.21","Выявление пробелов в цифровых компетенциях","e.6 e.15 l.9","Понимание и совершенствование собственной цифровой компетентности. Помощь другим в развитии их цифровой компетентности.","Оцените свою цифровую компетентность и составьте список возможностей для её улучшения.",""],
+["e.1","Выявление возможностей","d.1 d.11 d.19 d.20 g.4 g.5 g.6 g.10 l.8","Анализ социальной, культурной и экономической ситуации с целью выявления потребностей/проблем и использования возможностей для создания ценности.","Выявите и опишите экологическую проблему, которую необходимо решить в вашем населенном пункте.","CT PS AN"],
+["e.2","Креативность","d.10 d.11 d.13 d.19 d.20 g.4 g.5 g.6 g.9","Разработка творческих и целенаправленных идей для создания значимых результатов.","Найдите 50 способов применения карандаша.","PS CR"],
+["e.3","Видение","l.2 g.7 g.9 g.10","Представление будущего, чтобы направить усилия и воплотить идеи в реальность.","Создайте доску видения будущего на 20-летнюю перспективу.","CR"],
+["e.4","Оценка идей","d.12 g.5","Признание социальной, культурной и экономической ценности идей и рассмотрение способов их распространения и/или защиты.","Проведите SWOT-анализ идеи или проекта.","CT"],
+["e.5","Этическое и устойчивое мышление","g.1 g.2 g.3 g.4 l.3","Этичное поведение и устойчивое мышление, позволяющее оценивать последствия своих действий и считать себя ответственным за них.","Сравните три различных способа проведения отпуска и оцените их устойчивость.","CT"],
+["e.6","Самосознание и самоэффективность","d.21 g.12 l.1 l.7","Определение своих индивидуальных и групповых сильных и слабых сторон для укрепления веры в себя и формирования своего будущего в соответствии со своими потребностями, интересами и стремлениями.","Оцените свои навыки и разработайте план достижения краткосрочных, среднесрочных и долгосрочных целей.",""],
+["e.7","Мотивация и упорство","l.1 l.7","Быть стойким, сохранять сосредоточенность и целеустремленность, не сдаваться, несмотря на невзгоды и временные неудачи.","Составьте список различных стратегий самомотивации и мотивации других людей по преодолению трудностей.",""],
+["e.8","Мобилизация ресурсов","d.7","Получение поддержки и управление материальными и нематериальными ресурсами, максимальное использование своего времени.","Составьте список ресурсов, необходимых для проекта, и распределите роли.",""],
+["e.9","Финансовая и экономическая грамотность","g.1 g.2 g.3 l.3","Понимание экономических и финансовых концепций для определения бюджета, поиска финансирования и создания устойчивой ценности.","Проанализируйте бизнес-модель известной компании.",""],
+["e.10","Мобилизация других людей","l.5 g.11 g.10","Мотивация и убеждение соответствующих заинтересованных сторон для получения поддержки, эффективной коммуникации через различные средства массовой информации.","Подготовьте презентацию новой бизнес-идеи.","CN"],
+["e.11","Проявление инициативы","g.10 g.11 g.12","Самостоятельная работа и действия по достижению целей, реализация намеченных планов и выполнение запланированных задач.","Определите первые шаги к достижению общих целей и помогайте другим людям.","PS"],
+["e.12","Планирование и управление","d.3 d.14 g.7 g.8 l.2","Определение приоритетов и планов действий для достижения целей и адаптации к непредвиденным обстоятельствам.","Представьте себе худший сценарий решения проблемы и найдите оптимальные пути ее решения.","CT"],
+["e.13","Работа с неопределенностью, неоднозначностью и риском","g.8 l.2","Расчет и управление рисками, связанными с принимаемыми решениями, и готовность к изменению планов в зависимости от результата.","Используйте гибкий подход для решения поставленной задачи.",""],
+["e.14","Работа с другими людьми","d.4 d.5 d.7 g.11 l.4 l.6","Совместная работа и сотрудничество с другими людьми для разработки идей и воплощения их в реальность.","Проведите мозговой штурм идей и определите роли для реализации проекта.","TW"],
+["e.15","Обучение через опыт","l.7 l.8 l.9 d.21","Совместное обучение с коллегами и наставниками, рефлексия успехов и неудач, оценка накопленного опыта.","Проведите анализ проведенных мероприятий для создания чего-либо и выявите области для улучшения.","CT"],
+["g.1","Оценка устойчивости","e.5 e.9 l.1 l.3 l.4","Рефлексия над личностными ценностями, их различием между людьми и во времени, а также их соответствие ценностям устойчивого развития.","Обсудите, может ли эгоистичный человек оценить «устойчивое мышление», где общество и планета ставятся выше интересов одного человека.","CT CN IC"],
+["g.2","Поддержка справедливости","e.5 e.9 l.4","Поддержка равенства и справедливости для нынешнего и будущих поколений, извлечение уроков из прошлого.","Приведите примеры экологической несправедливости (например, превращение леса в поля под посев) и обсудите способы ее изменения.","IC"],
+["g.3","Охрана природы","d.16 d.17 e.5 e.9 l.3 l.4","Уважительное отношение к потребностям и правам других видов и природы для восстановления здоровых и устойчивых экосистем.","Посмотрите видеоролик об интенсивном животноводстве и обсудите вопрос о благополучии животных.",""],
+["g.4","Системное мышление","e.1 e.2 e.5 l.8","Подход к проблеме устойчивого развития с учетом контекста для понимания, как элементы взаимодействуют в системах.","Выберите продукт питания из своей кладовой и проследите его жизненный цикл: происхождение, условия труда фермеров, воздействие климатических изменений, упаковку, срок годности, пищевую ценность.","CT AN IC"],
+["g.5","Критическое мышление","l.8 d.1 d.2 e.1 e.2 e.4","Оценка информации для выработки обоснованных выводов и инновационных решений в области защиты окружающей среды.","Обсудите решения спорных проблем в области окружающей среды.","CT"],
+["g.6","Постановка проблемы","d.13 d.18 d.19 d.20 e.1 e.2 l.8","Рассмотрение вызовов как проблем устойчивого развития, учитывая сложность, участников, временные рамки и географический охват, а также определение соответствующих подходов.","Создайте альтернативные и безопасные маршруты передвижения для решения повседневных задач (например, маршрут в школу).","PS"],
+["g.7","Грамотность в отношении будущего","e.3 e.12","Визуализация альтернативных вариантов устойчивого будущего и определение шагов по их достижению.","Разработайте модель мира в далеком будущем Земли.","PS CR"],
+["g.8","Адаптивность","e.12 e.13 l.2","Рассмотрение риска и неоднозначных ситуаций для управления переходными процессами в сложных обстоятельствах.","Дайте описание наихудшего экологического сценария и его влияния на жизнь.",""],
+["g.9","Исследовательское мышление","d.13 d.19 d.20 e.2 e.3","Изучение и объединение различных дисциплин, использование творческого подхода и экспериментирование с новыми идеями или методами.","Разработайте три различных решения для одной экологической проблемы.","CR"],
+["g.10","Политическая активность","d.6 e.1 e.3 e.10 e.11 l.1","Определение гражданской ответственности и подотчетности за неустойчивое поведение и требование проведения эффективной политики в области устойчивого развития.","Узнайте, кто отвечает за переработку отходов в вашем городе и как с ними связаться.",""],
+["g.11","Коллективные действия","d.4 d.6 d.7 e.10 e.11 e.14 l.6","Требование и достижение изменений в сотрудничестве с другими.","Подготовьте совместную речь для публичного выступления с просьбой о принятии рациональных мер.","TW"],
+["g.12","Индивидуальная инициатива","d.6 e.6 e.11 l.1","Определение собственного потенциала для устойчивого развития и активный вклад в улучшение общества и планеты.","Обдумайте и запишите повседневные практические действия, направленные на улучшение жизни вашего сообщества.","CN"],
+["l.1","Саморегуляция","d.8 d.9 e.6 e.7 g.1 g.10 g.12","Развитие осознанности и управления эмоциями, мыслями и поведением.","Определите свои эмоции и разработайте стратегии управления своим поведением.",""],
+["l.2","Гибкость","e.3 e.12 e.13 g.8","Управление переходными процессами, неопределенностью и противостояние вызовам.","Изучите новые способы действий и адаптируйте свой подход.",""],
+["l.3","Благополучие","d.9 d.15 d.16 e.5 e.9 g.1 g.3","Стремление к удовлетворенности жизнью, забота о физическом, психическом и социальном здоровье, ведение здорового образа жизни.","Создайте рекомендации по заботе о своем физическом, социальном и психологическом благополучии.",""],
+["l.4","Эмпатия","e.14 g.1 g.2 g.3","Понимание эмоций, переживаний и ценностей другого человека и реагирование на них соответствующим образом.","Вступите в разговор с незнакомым человеком и выясните три факта (например, его лучший учитель, чем он гордится, что бы он сделал, если бы у него не было ограничений).","IC"],
+["l.5","Коммуникация","d.4 d.8 e.10","Использование стратегий коммуникации, кодов и инструментов, специфичных для данной области, в зависимости от контекста и содержания.","Практикуйте навык рассказывания историй.","CN IC"],
+["l.6","Сотрудничество","d.4 d.7 d.8 e.14 g.11","Участие в совместной деятельности и командной работе, проявляя уважение к другим участникам.","Установите цели и правила для командной работы, поощряющие вклад всех участников.","TW CN"],
+["l.7","Мышление роста","e.6 e.7 e.15","Уверенность в собственном потенциале и в потенциале других людей для непрерывного обучения и развития.","Оцените свои ошибки как возможности для роста.","CT"],
+["l.8","Критическое мышление","d.14 d.15 d.16 e.1 e.15 g.4 g.5 g.6","Оценка информации для выработки обоснованных выводов и инновационных решений.","Обсудите решения спорных проблем.","CT PS AN CR IC"],
+["l.9","Управление обучением","d.21 e.15","Планирование, организация, мониторинг и корректирование собственного обучения.","Ведите дневник обучения для отражения своих достижений.","CT PS AN"]
+].map(r=>({code:r[0],name:r[1],int:r[2].split(" ").filter(Boolean),desc:r[3],hint:r[4],sym:r[5].split(" ").filter(Boolean),fw:r[0][0]}));
+const CBY = Object.fromEntries(C.map(c=>[c.code,c]));
+
+const TEACH = [
+ {id:"proj",n:"Проектно-ориентированное обучение",d:"Обучающиеся развивают знания и навыки через проекты, основанные на реальных вызовах и проблемах, которые имеют для них значение, что придает обучению целенаправленность и стимулирует самостоятельность обучающихся.",s:["Обучающиеся определяют и формулируют реальную проблему, вопрос или задачу.","Определяют и составляют последовательность заданий для проведения долгосрочного исследования.","Генерируют и оценивают идеи.","Создают продукт для тестирования, доработки и презентации своей работы.","Рефлексируют и подводят итоги обучения."]},
+ {id:"person",n:"Личностно-ориентированное обучение",d:"Обучающиеся активно делятся своим опытом, чтобы сделать обучение актуальным, целенаправленным и значимым для своих индивидуальных потребностей, интересов, опыта и амбиций.",s:["Обучающиеся определяют темы или проблемы для изучения.","Определяют предпочтительные методы обучения и оценки.","Определяют личные цели развития компетенций.","Определяют способы отбора, применения и оценки компетенций при выполнении конкретных задач.","Получают поддержку в соотнесении компетенций с различными целями и контекстами."]},
+ {id:"value",n:"Педагогика создания ценностей",d:"Обучающиеся учатся, применяя свои компетенции (будущие или уже имеющиеся) для создания чего-либо ценного по крайней мере для одной заинтересованной стороны вне их группы, класса или колледжа. Ценность может быть экономической, социальной или культурной.",s:["Обучающиеся анализируют, кому может быть полезно их обучение.","Выявляют возможности создания ценности для других.","Решают, как будут создавать ценность, и предпринимают действия.","Используют обратную связь от предполагаемых бенефициаров для совершенствования своей работы.","Анализируют свой опыт обучения."]},
+ {id:"collab",n:"Обучение в сотрудничестве",d:"Обучающиеся получают знания друг от друга, учитывая различные точки зрения, потребности и предпочтения в обучении, чтобы мотивировать и поддерживать друг друга в достижении более высоких результатов.",s:["Обучающиеся работают в группах.","Определяют/получают индивидуальные и групповые цели.","Совместно работают над созданием решений.","Вносят свой вклад в определение критериев успеха и общих ожиданий.","«Обучают» друг друга."]},
+ {id:"game",n:"Обучение в игровой форме",d:"Обучающихся поощряют заниматься творчеством, исследовать, быть активными и погружаться в обучение, чтобы стимулировать внутреннюю мотивацию и «состояние потока».",s:["Обучающиеся получают поддержку, чтобы учиться на ошибках в безопасном пространстве.","Участвуют в игровой деятельности, направленной на обучение.","Понимают учебную цель деятельности.","Эмоционально вовлечены в процесс обучения.","Представляют себе устойчивое будущее и по-новому формулируют проблемы."]},
+ {id:"lab",n:"Лабораторный метод обучения",d:"Обучающиеся получают знания через практический опыт, полученный в результате экспериментов методом проб и ошибок с предметами, материалами и явлениями, где они могут наблюдать, практиковаться и тестировать решения.",s:["Обучающиеся экспериментируют, используя доступные ресурсы.","Учатся, создавая.","Учатся на неудачах и ошибках.","Документируют свою лабораторную практику.","Анализируют свой опыт обучения."]},
+ {id:"service",n:"Сервисное обучение",d:"Обучающиеся воплощают свои идеи в действия для удовлетворения реальных потребностей своего местного сообщества.",s:["Обучающиеся взаимодействуют со своими сообществами и выявляют потребности.","Изучают возможности создания ценности для сообщества.","Предпринимают действия по созданию ценности для сообщества.","Учитывают отзывы бенефициаров.","Наглядно демонстрируют полученные знания и поощряют достигнутый прогресс."]}
+];
+const ASSESS = [
+ {id:"peer",n:"Обратная связь от сверстников",d:"Обучающиеся дают и получают обратную связь от сверстников о том, на каком этапе обучения они находятся и какие следующие шаги можно предпринять для дальнейшего прогресса.",t:["Создайте обучающимся возможность часто давать и получать отзывы о работе друг друга.","Учите воспринимать критику и давать конструктивную обратную связь, развивающую мышление роста и критическое мышление.","Используйте обратную связь, чтобы сделать обучение наглядным, и опишите желаемые результаты."],ex:["Пары для обсуждения","«Две звезды и одно пожелание»","Групповая рецензия","Анонимные отзывы","«Плюс — минус — интересно»"]},
+ {id:"self",n:"Самоанализ",d:"Обучающиеся анализируют обратную связь и фактические данные, чтобы оценить себя в соответствии с установленными критериями оценки.",t:["Предоставляйте регулярные возможности для суждений о своих достижениях и результатах обучения.","Поддерживайте обучающихся в определении методов обратной связи, стандартов и/или критериев для их работы.","Учите подтверждать свою компетентность различными способами для развития навыков рефлексии."]},
+ {id:"evidence",n:"Формирование оценочных данных",d:"Обучающиеся используют разные медиатехнологии, чтобы предоставить доказательства и подтвердить свою компетенцию, выступая перед различными аудиториями.",t:["Поддерживайте обучающихся в определении доказательств для демонстрации усвоенного материала.","Предоставляйте свободу выбора и гибкость в организации своего обучения.","Используйте онлайн-инструменты (интерактивные веб-инструменты, социальные сети) как хранилище доказательств."]},
+ {id:"auth",n:"Аутентичная оценка",d:"Обучающиеся применяют полученные знания в конкретных, значимых ситуациях, соответствующих реальным ожиданиям в сфере деятельности, с участием реальных заинтересованных сторон.",t:["Создавайте мультимедийные сценарии из реальной жизни, позволяющие продемонстрировать компетенции.","Связывайте оценку с реальными вопросами, проблемами и применением.","Используйте симуляционные и ролевые игры."]},
+ {id:"auto",n:"Автоматизированная оценка",d:"Обучающиеся получают доступ к оцениванию в цифровом формате с функциями обратной связи, отчетности и/или портфолио.",t:["Используйте функции обратной связи для конструктивной оценки и постановки дальнейших задач.","Адаптируйте преподавание к потребностям обучающихся, используя своевременную обратную связь.","Предоставляйте разнообразные способы получения обратной связи для совершенствования работы."]},
+ {id:"obs",n:"Наблюдение",d:"Наблюдение за обучающимися в действии с использованием различных методов для отслеживания их достижений, заинтересованности, компетенций, сильных сторон и потребностей.",t:["Составьте и следуйте плану наблюдения, включающему различные методы.","Документируйте наблюдения, собирая доказательства для анализа компетенций вместе с обучающимися.","Периодически проводите наблюдения, фиксируя результаты."]},
+ {id:"quest",n:"Учебные вопросы",d:"Вопросы помогают установить взаимопонимание и доверие, побуждают обучающихся обмениваться идеями, исследовать и совершенствовать мышление, подтверждая развитие компетенций.",t:["Задавайте открытые вопросы, способствующие вовлеченности и активному обучению.","Задавайте вопросы в последовательности, обеспечивающей их глубину и сложность.","Учите постоянно задавать критические и сложные вопросы себе и другим."]}
+];
+const TBY=Object.fromEntries(TEACH.map(m=>[m.id,m])), ABY=Object.fromEntries(ASSESS.map(m=>[m.id,m]));
+
+const TASKS = [
+ {k:"goal",t:"Цель",q:"Какова цель занятия?",n:"Сформулируйте по SMART. Цель шире программы и не дублирует компетенции."},
+ {k:"duration",t:"Длительность",q:"Сколько времени будет длиться занятие?",n:"Сколько минут/часов? Одно занятие или серия?"},
+ {k:"topic",t:"Тема",q:"Какому разделу учебной программы будет посвящено занятие?",n:"Тема по программе; укажите дисциплину/модуль и межпредметные связи."},
+ {k:"audience",t:"Целевая аудитория",q:"Кто будет обучаться? Сколько человек в группе?",n:"Курс, специальность, число обучающихся, опыт."},
+ {k:"needs",t:"Потребности",q:"На какие потребности обучающихся будет направлена работа? Общие или специфические?",n:"Например: визуализация текста, доп. подготовка, больше времени."},
+ {k:"resources",t:"Ресурсы",q:"Какие ресурсы и люди необходимы для осуществления деятельности?",n:"Оборудование, ПО, материалы, коллеги, социальные партнёры."},
+ {k:"place",t:"Место",q:"Где будет проходить занятие?",n:"Аудитория, мастерская, предприятие, онлайн/смешанный формат."},
+ {k:"real",t:"Связь с реальной жизнью",q:"Какие жизненные проблемы будут рассмотрены? Есть ли связь с реальным миром?",n:"Связь с сообществом, производством, другими предметами."}
+];
+const PLAN = [
+ {n:1,t:"Выберите компетенции",q:"Над какими компетенциями будут работать обучающиеся? Выберите из карточек компетенции и поместите их сюда.",step:3},
+ {n:2,t:"Определите уровень компетенции",q:"Каков уровень подготовки обучающихся? Выберите метод оценки их начального уровня среди карточек «Методы оценки».",step:4},
+ {n:3,t:"Выберите метод обучения",q:"Каким образом вы собираетесь преподавать? Выберите одну или несколько карточек «Методы обучения».",step:5},
+ {n:4,t:"Ожидаемые результаты / индикаторы",q:"Чего бы вы хотели, чтобы ваши обучающиеся достигли / сделали / произвели? Определите, что будет конечным результатом.",step:6},
+ {n:5,t:"Выберите метод оценки",q:"Как вы будете оценивать прогресс обучающихся? Выберите одну из карточек «Методы оценки».",step:7},
+ {n:6,t:"Сбор ресурсов",q:"Есть ли у вас всё необходимое? Подготовьте необходимые ресурсы и привлеките соответствующих людей.",step:8},
+ {n:7,t:"Хронология",q:"Как будет проходить занятие? Запишите план и хронологию учебного занятия.",step:9}
+];
+const STEPS = [
+ {id:1,t:"Задание",s:"Параметры занятия"},
+ {id:2,t:"Расклад карточек",s:"Обзор планирования"},
+ {id:3,t:"Компетенции",s:"Карточка планирования 1"},
+ {id:4,t:"Начальный уровень",s:"Карточка планирования 2"},
+ {id:5,t:"Метод обучения",s:"Карточка планирования 3"},
+ {id:6,t:"Желаемый результат",s:"Карточка планирования 4"},
+ {id:7,t:"Метод оценки",s:"Карточка планирования 5"},
+ {id:8,t:"Ресурсы",s:"Карточка планирования 6"},
+ {id:9,t:"План урока",s:"Карточка планирования 7"},
+ {id:10,t:"Готовый план",s:"Просмотр и копирование"}
+];
+
+/* ===================== STATE ===================== */
+const KEY="scaffold-lessons-v1";
+const uid=()=>Math.random().toString(36).slice(2,10);
+function blankLesson(){return{id:uid(),example:false,task:{goal:"",duration:"",topic:"",audience:"",needs:"",resources:"",place:"",real:""},comps:[],trans:[],head:{section:"",teacher:"",date:"",group:"",present:"",absent:"",objectives:""},diag:{methods:[],note:""},teach:{methods:[],custom:""},results:{product:"",indicators:[""],criteria:""},assess:{methods:[],note:""},res:{items:[],people:""},timeline:[],updated:Date.now()}}
+function exampleLesson(){
+ const L=blankLesson(); L.example=true;
+ L.task={goal:"К концу занятия обучающиеся в командах соберут действующую 3D-модель теплового двигателя из вторичного сырья и объяснят, от чего зависит его КПД, опираясь на расчёт.",duration:"90",topic:"Тепловые двигатели. КПД тепловых двигателей. Интегрированное занятие: «Физика» + производственное обучение (специальность «Техническое обслуживание, ремонт и эксплуатация автомобильного транспорта»).",audience:"2 курс, 24 обучающихся; работа в 6 командах по 4 человека.",needs:"Двум обучающимся нужна визуальная опора (схемы цикла). Часть группы слабо владеет расчётными задачами.",resources:"Технологическая карта модели\nКартон, крафт-бумага, вторсырьё\nНожницы, клей, линейки\nПроектор, ноутбук\nМастер производственного обучения",place:"Учебная мастерская колледжа",real:"Как КПД двигателя влияет на расход топлива и выбросы автомобиля; повторное использование материалов."};
+ L.comps=["e.2","g.9","l.6","e.14","d.10"];
+ L.trans=["CR","TW"];
+ L.head={section:"Физика: Термодинамика / Производственное обучение",teacher:"",date:"",group:"АТ-21, 2 курс",present:"24",absent:"0",objectives:"Объяснять принцип работы тепловых двигателей и рассчитывать их КПД; изготавливать действующую модель по технологической карте."};
+ L.diag={methods:["quest"],note:"5 открытых вопросов о принципе работы двигателя внутреннего сгорания; ответы фиксируем на доске."};
+ L.teach={methods:["lab","collab"],custom:""};
+ L.results={product:"Действующая 3D-модель теплового (или реактивного) двигателя по технологической карте и короткая презентация команды.",indicators:["Модель собрана по технологической карте и демонстрирует цикл работы","Команда верно рассчитывает КПД для заданных значений","Каждый участник объясняет свою роль в работе команды","Использовано не менее 70% вторичных материалов"],criteria:"Рубрика из 4 критериев: точность модели, расчёт, объяснение, командная работа (по 3 уровня)."};
+ L.assess={methods:["peer","obs"],note:"Взаимооценка «две звезды и одно пожелание» после защиты моделей; лист наблюдения педагога за работой команд."};
+ L.res={items:[{t:"Технологические карты (6 шт.)",done:true},{t:"Картон и крафт-бумага, вторсырьё",done:true},{t:"Ножницы, клей, линейки",done:false},{t:"Лист наблюдения и рубрика",done:false}],people:"Мастер производственного обучения (совместное ведение)"};
+ L.timeline=[
+  {min:"10",stage:"Начало. Диагностика",teacher:"Задаёт открытые вопросы о работе ДВС, фиксирует ответы.",students:"Отвечают, вспоминают устройство двигателя.",assess:"Учебные вопросы",res:"Доска, вопросы на слайде"},
+  {min:"15",stage:"Постановка задачи",teacher:"Объясняет цель, раздаёт технологические карты, формирует команды.",students:"Распределяют роли, изучают карту.",assess:"",res:"Технологические карты, проектор"},
+  {min:"35",stage:"Лабораторная работа",teacher:"Консультирует команды, наблюдает.",students:"Собирают модель, экспериментируют, рассчитывают КПД.",assess:"Наблюдение",res:"Картон, крафт-бумага, вторсырьё, ножницы, клей; лист наблюдения"},
+  {min:"20",stage:"Презентация моделей",teacher:"Модерирует защиту.",students:"Демонстрируют модели, дают взаимооценку.",assess:"Обратная связь от сверстников",res:"Модели команд, рубрика оценивания"},
+  {min:"10",stage:"Рефлексия",teacher:"Подводит итоги по критериям.",students:"Записывают, что получилось и что улучшить.",assess:"Самоанализ",res:"Листы рефлексии"}
+ ];
+ return L;
+}
+let DB={lessons:[],cur:null}, storageOK=true;
+function load(){
+ try{const raw=localStorage.getItem(KEY); if(raw){const d=JSON.parse(raw); if(d&&Array.isArray(d.lessons)&&d.lessons.length){DB=d;}}}catch(e){storageOK=false}
+ if(!DB.lessons.length){const ex=exampleLesson();DB={lessons:[ex],cur:ex.id}}
+ DB.lessons.forEach(l=>{if(!Array.isArray(l.trans))l.trans=[];if(!l.head)l.head={section:"",teacher:"",date:"",group:"",present:"",absent:"",objectives:""};(l.timeline||[]).forEach(r=>{if(r.res==null)r.res=""})});
+ if(!DB.lessons.find(l=>l.id===DB.cur))DB.cur=DB.lessons[0].id;
+}
+let saveT;
+function save(){
+ L().updated=Date.now();
+ clearTimeout(saveT);
+ saveT=setTimeout(()=>{
+  try{localStorage.setItem(KEY,JSON.stringify(DB));setSaved("Сохранено в этом браузере")}catch(e){setSaved("Не удаётся сохранить: сделайте резервную копию")}
+ },300);
+}
+function setSaved(t){document.getElementById("saveState").textContent=t}
+const L=()=>DB.lessons.find(l=>l.id===DB.cur);
+function lessonName(l){const t=(l.task.topic||"").split(/[.\n]/)[0].trim();return (l.example?"Пример: ":"")+(t||"Новый урок")}
+
+let step=1, ui={fw:"all",sym:null,q:"",onlySel:false};
+try{const s=+localStorage.getItem(KEY+"-step"); if(s>=1&&s<=10)step=s}catch(e){}
+
+/* ===================== HELPERS ===================== */
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $=s=>document.querySelector(s);
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+function getPath(o,p){return p.split(".").reduce((a,k)=>a?.[k],o)}
+function setPath(o,p,v){const ks=p.split(".");const last=ks.pop();const t=ks.reduce((a,k)=>a[k],o);t[last]=v}
+function stepDone(id){const l=L();switch(id){
+ case 1:return !!(l.task.goal&&l.task.topic&&l.task.duration);
+ case 2:return [3,4,5,6,7,8,9].every(stepDone);
+ case 3:return l.comps.length>=1;
+ case 4:return l.diag.methods.length>0||!!l.diag.note;
+ case 5:return l.teach.methods.length>0||!!l.teach.custom;
+ case 6:return !!l.results.product;
+ case 7:return l.assess.methods.length>0||!!l.assess.note;
+ case 8:return l.res.items.length>0;
+ case 9:return l.timeline.length>0;
+ default:return false}}
+function totalMin(){return L().timeline.reduce((a,r)=>a+(parseFloat(r.min)||0),0)}
+
+/* ===================== RENDER: chrome ===================== */
+function renderLessons(){
+ const sel=$("#lessonSel");
+ sel.innerHTML=DB.lessons.slice().sort((a,b)=>b.updated-a.updated).map(l=>`<option value="${l.id}" ${l.id===DB.cur?"selected":""}>${esc(lessonName(l))}</option>`).join("");
+}
+function renderSteps(){
+ $("#steps").innerHTML=STEPS.map(s=>`<li><button type="button" class="step-btn ${s.id===step?"on":""} ${s.id<=9&&stepDone(s.id)?"done":""}" data-step="${s.id}" ${s.id===step?'aria-current="step"':""}>
+  <span class="step-num">${s.id<=9?s.id:"✓"}</span><span class="step-t">${s.t}<span class="step-s">${s.s}</span></span><span class="dot ${s.id<=9&&stepDone(s.id)?"ok":""}"></span></button></li>`).join("");
+}
+function go(n){step=n;try{localStorage.setItem(KEY+"-step",n)}catch(e){}render();window.scrollTo({top:0})}
+function render(){renderLessons();renderSteps();const m=$("#main");m.innerHTML=VIEWS[step]();after[step]?.()}
+function head(eyebrow,title,lead){return `<div class="head"><div class="eyebrow">${eyebrow}</div><h1>${title}</h1>${lead?`<p class="lead">${lead}</p>`:""}</div>`}
+function pcard(n){const p=PLAN[n-1];return `<div class="pcard"><div class="no">${p.n}</div><div><div class="lbl">Планирование · ${p.t}</div><div class="q">${p.q}</div></div></div>`}
+function navRow(){const prev=step>1?`<button class="btn" type="button" data-step="${step-1}">← ${STEPS[step-2].t}</button>`:"<span></span>";const next=step<10?`<button class="btn primary" type="button" data-step="${step+1}">${STEPS[step].t} →</button>`:"";return `<div class="nav-row">${prev}${next}</div>`}
+function exampleNote(){return L().example?`<div class="note"><b>Пример.</b><span>Это демонстрационный урок из УММ (тепловые двигатели). Меняйте его свободно или нажмите «+ Новый урок», чтобы начать с чистого листа.</span></div>`:""}
+
+/* ===================== VIEWS ===================== */
+const VIEWS={}, after={};
+VIEWS[1]=()=>{const l=L();return `${head("Шаг 1 · Карточки «Задание»","Определите параметры занятия","Ответьте на вопросы карточек в любом порядке. Ответы — это стикеры вокруг карточек: они дают целостную картину среды обучения.")}
+ ${exampleNote()}
+ <div class="panel"><h2>Шапка поурочного плана (приказ № 130)</h2><div class="hint">Эти поля попадут в начало плана урока. Тема урока и цель урока берутся из карточек «Тема» и «Цель» ниже.</div>
+ <div class="head-grid">
+  <div class="field"><label for="h-section">Раздел / модуль, дисциплина</label><input id="h-section" class="input" data-bind="head.section" value="${esc(l.head.section)}" placeholder="Например: ПМ 03. Техническое обслуживание автомобилей"></div>
+  <div class="field"><label for="h-teacher">ФИО педагога</label><input id="h-teacher" class="input" data-bind="head.teacher" value="${esc(l.head.teacher)}"></div>
+  <div class="field"><label for="h-date">Дата</label><input id="h-date" class="input" type="date" data-bind="head.date" value="${esc(l.head.date)}"></div>
+  <div class="field"><label for="h-group">Группа / курс</label><input id="h-group" class="input" data-bind="head.group" value="${esc(l.head.group)}" placeholder="Например: АТ-21, 2 курс"></div>
+  <div class="field"><label for="h-present">Количество присутствующих</label><input id="h-present" class="input" inputmode="numeric" data-bind="head.present" value="${esc(l.head.present)}"></div>
+  <div class="field"><label for="h-absent">Количество отсутствующих</label><input id="h-absent" class="input" inputmode="numeric" data-bind="head.absent" value="${esc(l.head.absent)}"></div>
+ </div>
+ <div class="field"><label for="h-obj">Цели обучения в соответствии с учебной программой</label><textarea id="h-obj" class="area" data-bind="head.objectives" placeholder="Результаты обучения из рабочей учебной программы">${esc(l.head.objectives)}</textarea></div></div>
+ <div class="task-grid">${TASKS.map(t=>`<div class="tcard"><div class="tt">Задание · ${t.t}</div><div class="tq">${t.q}</div><div class="tn">${t.n}</div>
+ ${t.k==="duration"?`<div class="dur-row"><input id="f-dur" type="number" min="5" step="5" inputmode="numeric" data-bind="task.duration" value="${esc(l.task.duration)}" placeholder="мин"><span class="hint">минут</span>${[45,80,90,180].map(v=>`<button type="button" class="chip-btn ${String(l.task.duration)===String(v)?"on":""}" data-dur="${v}">${v}</button>`).join("")}</div>`
+ :`<textarea id="f-${t.k}" class="sticky" data-bind="task.${t.k}" placeholder="Стикер: ваш ответ…">${esc(l.task[t.k])}</textarea>`}</div>`).join("")}</div>${navRow()}`};
+
+VIEWS[2]=()=>{const l=L();
+ const col=(p,items)=>`<div class="bcol"><button type="button" class="bhead" data-step="${p.step}"><span class="n">${p.n}</span><span class="t">${p.t}</span></button>${items.length?items.join(""):`<div class="bitem empty">Пусто — нажмите на карточку</div>`}</div>`;
+ const it=(t,cls="")=>`<div class="bitem ${cls}">${t}</div>`;
+ const cols=[
+  [...l.comps.map(c=>{const x=CBY[c];return x?`<div class="bitem" style="border-left:4px solid ${FW[x.fw].c1}"><span class="code">${x.code}</span>${esc(x.name)}</div>`:""}),...(l.trans.length?[it("Сквозные: "+Object.keys(SYM).filter(k=>l.trans.includes(k)).map(k=>SYM[k].n).join(", "),"st")]:[])],
+  [...l.diag.methods.map(id=>it(esc(ABY[id].n))),...(l.diag.note?[it(esc(l.diag.note),"st")]:[])],
+  [...l.teach.methods.map(id=>it(esc(TBY[id].n))),...(l.teach.custom?[it(esc(l.teach.custom),"st")]:[])],
+  [...(l.results.product?[it(esc(l.results.product),"st")]:[]),...l.results.indicators.filter(Boolean).map(i=>it("• "+esc(i),"st"))],
+  [...l.assess.methods.map(id=>it(esc(ABY[id].n))),...(l.assess.note?[it(esc(l.assess.note),"st")]:[])],
+  l.res.items.map(r=>it((r.done?"☑ ":"☐ ")+esc(r.t),"st")),
+  l.timeline.map(r=>it(`<span class="code">${esc(r.min||"?")}′</span>${esc(r.stage)}`,"st"))
+ ];
+ return `${head("Шаг 2 · Карточки «Планирование»","Расклад карточек","Карточки планирования лежат в ряд по порядку 1–7. Под каждой — выбранные карточки-библиотеки и стикеры. Нажмите на карточку, чтобы заполнить её.")}
+ <div class="panel"><h2>Карточки «Задание» (шаг 1)</h2><div class="tasks-strip">${TASKS.map(t=>`<div class="bitem ${l.task[t.k]?"st":"empty"}"><b>${t.t}:</b> ${l.task[t.k]?esc(String(l.task[t.k]).slice(0,90))+(String(l.task[t.k]).length>90?"…":"")+(t.k==="duration"?" мин":""):"—"}</div>`).join("")}</div></div>
+ <div class="board">${PLAN.map((p,i)=>col(p,cols[i])).join("")}</div>${navRow()}`};
+
+VIEWS[3]=()=>{const l=L();
+ const counts={};l.comps.forEach(c=>CBY[c]?.int.forEach(x=>{if(!l.comps.includes(x))counts[x]=(counts[x]||0)+1}));
+ const reco=Object.entries(counts).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],undefined,{numeric:true})).slice(0,12);
+ const symAgg={};l.comps.forEach(c=>CBY[c]?.sym.forEach(s=>symAgg[s]=(symAgg[s]||0)+1));
+ return `${head("Шаг 3","Выберите карточки компетенций","Библиотека из 57 карточек четырёх рамок ЕС. Методика рекомендует начать минимум с трёх компетенций.")}
+ ${pcard(1)}
+ <div class="panel">
+  <h2>Выбрано: ${l.comps.length}</h2>
+  ${l.comps.length?`<div class="tray">${l.comps.map(c=>{const x=CBY[c];if(!x)return"";const f=FW[x.fw];return `<span class="tag ${f.lite?"lite":""}" style="--c1:${f.c1};--c2:${f.c2}"><span class="code">${x.code}</span>${esc(x.name)}<button type="button" data-unsel="${x.code}" aria-label="Убрать ${x.code}">×</button></span>`}).join("")}</div>`:`<div class="hint">Пока ничего не выбрано. Выберите карточки ниже или нажмите «Случайная карточка».</div>`}
+  ${l.comps.length&&l.comps.length<3?`<div class="note"><b>Совет.</b><span>Лучше начать как минимум с трёх компетенций.</span></div>`:""}
+  <div class="field"><div class="hint"><b style="color:var(--ink)">Сквозные компетенции урока.</b> Отметьте те, которые будете развивать: в план попадут только отмеченные. Число показывает, на скольких выбранных карточках есть этот символ.</div><div class="sym-row">${Object.entries(SYM).map(([k,s])=>{const on=l.trans.includes(k),n=symAgg[k]||0;return `<button type="button" class="sym-btn ${on?"on":""}" data-trans="${k}" aria-pressed="${on}" title="${esc(s.d)}">${on?"✓ ":""}${symSvg(k,14)} ${s.n}${n?` · ${n}`:""}</button>`}).join("")}</div></div>
+  ${reco.length?`<div class="reco"><span class="hint">Хорошо сочетаются с выбранными:</span>${reco.map(([c,n])=>`<button type="button" class="code-chip" data-goto="${c}" title="${esc(CBY[c]?.name)}">${c}<span class="cnt">×${n}</span></button>`).join("")}</div>`:""}
+ </div>
+ <div class="panel">
+  <div class="toolbar">
+   <button type="button" class="chip-btn ${ui.fw==="all"?"on":""}" data-fw="all">Все · 57</button>
+   ${Object.entries(FW).map(([k,f])=>`<button type="button" class="chip-btn fw-chip ${ui.fw===k?"on":""}" data-fw="${k}"><i style="background:${f.c1}"></i>${f.s} · ${C.filter(c=>c.fw===k).length}</button>`).join("")}
+  </div>
+  <div class="sym-row"><span class="hint">Сквозной критерий:</span>${Object.entries(SYM).map(([k,s])=>`<button type="button" class="sym-btn ${ui.sym===k?"on":""}" data-sym="${k}" aria-pressed="${ui.sym===k}">${symSvg(k,14)} ${s.n}</button>`).join("")}</div>
+  <div class="toolbar"><input id="cq" class="input" type="search" placeholder="Поиск по названию или коду…" value="${esc(ui.q)}"><label class="hint" style="display:flex;gap:6px;align-items:center"><input id="onlySel" type="checkbox" ${ui.onlySel?"checked":""}> только выбранные</label><button type="button" class="btn small" id="randBtn">Случайная карточка</button></div>
+  <div class="cgrid" id="cgrid"></div>
+  <details class="more"><summary>Что означают символы сквозных компетенций</summary><div class="trans-legend" style="margin-top:10px">${Object.entries(SYM).map(([k,s])=>`<div class="tl">${symSvg(k,18)}<div><b>${s.n}</b>${s.d}</div></div>`).join("")}</div></details>
+ </div>${navRow()}`};
+function cardHTML(c,sel){const f=FW[c.fw];return `<article class="ccard ${sel?"sel":""} ${f.lite?"lite":""}" id="card-${c.code.replace(".","-")}" style="--c1:${f.c1};--c2:${f.c2}">
+ <div class="cband ${f.lite?"lite":""}"><div class="cfw">${f.s}</div><div class="ctop"><div class="cname">${esc(c.name)}</div><div class="ccode">${c.code}</div></div></div>
+ <div class="cbody"><div class="cint"><span class="lab">Интеграция:</span>${c.int.map(x=>`<button type="button" class="code-chip ${L().comps.includes(x)?"hit":""}" data-goto="${x}" title="${esc(CBY[x]?.name)}">${x}</button>`).join("")}<span style="flex:1"></span><span class="csyms">${c.sym.map(s=>`<span title="${SYM[s].n}">${symSvg(s,15)}</span>`).join("")}</span></div>
+ <div class="cdesc">${esc(c.desc)}</div><div class="chint">${esc(c.hint)}</div></div>
+ <div class="cfoot"><button type="button" class="btn sel-btn" data-toggle="${c.code}">${sel?"✓ Выбрана":"Выбрать"}</button></div></article>`}
+function renderGrid(){const l=L();const q=ui.q.trim().toLowerCase();
+ const list=C.filter(c=>(ui.fw==="all"||c.fw===ui.fw)&&(!ui.sym||c.sym.includes(ui.sym))&&(!ui.onlySel||l.comps.includes(c.code))&&(!q||c.code.includes(q)||c.name.toLowerCase().includes(q)||c.desc.toLowerCase().includes(q)));
+ $("#cgrid").innerHTML=list.length?list.map(c=>cardHTML(c,l.comps.includes(c.code))).join(""):`<div class="hint">Нет карточек по этим условиям. Сбросьте фильтр.</div>`}
+after[3]=()=>{renderGrid();const q=$("#cq");q.addEventListener("input",()=>{ui.q=q.value;renderGrid()});$("#onlySel").addEventListener("change",e=>{ui.onlySel=e.target.checked;renderGrid()})};
+
+function methodPicker(kind,path,lib,multiNote){const l=L();const chosen=getPath(l,path);
+ return `<div class="mgrid">${lib.map(m=>{const on=chosen.includes(m.id);return `<article class="mcard ${on?"sel":""}"><div class="mhead"><div class="k">${kind}</div><h3>${esc(m.n)}</h3></div>
+ <div class="mbody"><div>${esc(m.d)}</div>${m.s?`<ol>${m.s.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:""}${m.t?`<ul>${m.t.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${m.ex?`<div class="hint"><b>Приёмы:</b> ${m.ex.join(" · ")}</div>`:""}</div>
+ <div class="mfoot"><button type="button" class="btn ${on?"primary":""}" data-pick="${path}" data-id="${m.id}">${on?"✓ Выбран":"Выбрать"}</button></div></article>`}).join("")}</div>`}
+VIEWS[4]=()=>{const l=L();return `${head("Шаг 4","Оцените начальный уровень","Диагностика в начале занятия показывает исходный уровень владения выбранными компетенциями. Подойдут вступительный тест, собеседование, вопросы и другие методы.")}
+ ${pcard(2)}
+ <div class="panel"><div class="field"><label for="f-diag">Как именно проведёте диагностику (стикер)</label><textarea id="f-diag" class="sticky" data-bind="diag.note" placeholder="Например: 5 открытых вопросов по теме, ответы фиксируются на доске">${esc(l.diag.note)}</textarea></div></div>
+ ${methodPicker("Метод оценки","diag.methods",ASSESS)}${navRow()}`};
+VIEWS[5]=()=>{const l=L();return `${head("Шаг 5","Выберите метод обучения","Выберите метод до планирования деятельности. Для длительной работы методы можно комбинировать.")}
+ ${pcard(3)}
+ ${methodPicker("Метод обучения","teach.methods",TEACH)}
+ <div class="panel"><div class="field"><label for="f-custom">Свой метод, уже опробованный вами (стикер)</label><textarea id="f-custom" class="sticky" data-bind="teach.custom" placeholder="Если используете другой эффективный метод — опишите его здесь">${esc(l.teach.custom)}</textarea></div></div>${navRow()}`};
+VIEWS[6]=()=>{const l=L();return `${head("Шаг 6","Определите желаемый результат","Опишите деятельность обучающихся, конечный продукт и критерии. Так обучающиеся понимают, что от них ожидается, а вы можете реально оценить их рост.")}
+ ${pcard(4)}
+ <div class="panel"><div class="field"><label for="f-prod">Конечный продукт / результат</label><textarea id="f-prod" class="sticky" data-bind="results.product" placeholder="Что обучающиеся создадут, сделают или продемонстрируют?">${esc(l.results.product)}</textarea></div></div>
+ <div class="panel"><h2>Индикаторы достижения</h2><div class="hint">По каким наблюдаемым признакам вы поймёте, что результат достигнут?</div>
+  <div class="rows" id="indRows">${l.results.indicators.map((v,i)=>`<div class="row"><input class="input" id="ind-${i}" data-ind="${i}" value="${esc(v)}" placeholder="Обучающийся может…"><button type="button" class="icon-btn" data-delind="${i}" aria-label="Удалить индикатор">✕</button></div>`).join("")}</div>
+  <div><button type="button" class="btn small" id="addInd">+ Индикатор</button></div></div>
+ <div class="panel"><div class="field"><label for="f-crit">Критерии оценивания и требования</label><textarea id="f-crit" class="area" data-bind="results.criteria" placeholder="Рубрика, уровни, обязательные требования к работе">${esc(l.results.criteria)}</textarea></div>
+ ${l.comps.length?`<div class="hint">Выбранные компетенции: ${l.comps.map(c=>`<b>${c}</b> ${esc(CBY[c]?.name||"")}`).join("; ")}. Подсказки на их карточках помогут сформулировать индикаторы.</div>`:""}</div>${navRow()}`};
+VIEWS[7]=()=>{const l=L();return `${head("Шаг 7","Выберите метод оценки","Оценивайте в ходе обучения, а не только в конце. Можно использовать тот же метод, что и при диагностике, или другой. Оценивание должно соответствовать целям и желаемым результатам.")}
+ ${pcard(5)}
+ ${l.results.product?`<div class="panel"><h2>Что оцениваем</h2><div>${esc(l.results.product)}</div>${l.results.indicators.filter(Boolean).length?`<ul style="margin:0;padding-left:20px">${l.results.indicators.filter(Boolean).map(i=>`<li>${esc(i)}</li>`).join("")}</ul>`:""}</div>`:""}
+ ${methodPicker("Метод оценки","assess.methods",ASSESS)}
+ <div class="panel"><div class="field"><label for="f-anote">Как будет проходить оценивание (стикер)</label><textarea id="f-anote" class="sticky" data-bind="assess.note" placeholder="Когда, кто и по каким критериям оценивает; свой метод, если его нет среди карточек">${esc(l.assess.note)}</textarea></div></div>${navRow()}`};
+VIEWS[8]=()=>{const l=L();const done=l.res.items.filter(r=>r.done).length;return `${head("Шаг 8","Соберите необходимые ресурсы","Перечислите всё, что нужно для занятия, и отмечайте по мере подготовки — от печатных материалов до цифровых инструментов и приглашённых специалистов.")}
+ ${pcard(6)}
+ <div class="panel"><div class="sum"><h2 style="margin-right:auto">Контрольный список</h2><span class="pill ${l.res.items.length&&done===l.res.items.length?"ok":"warn"}">${done} / ${l.res.items.length} готово</span></div>
+  <div class="rows">${l.res.items.map((r,i)=>`<div class="check ${r.done?"done":""}"><input type="checkbox" id="rc-${i}" data-rdone="${i}" ${r.done?"checked":""} aria-label="Готово"><input class="input" id="rt-${i}" data-rtext="${i}" value="${esc(r.t)}" placeholder="Ресурс"><button type="button" class="icon-btn" data-rdel="${i}" aria-label="Удалить">✕</button></div>`).join("")}</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn small" id="addRes">+ Ресурс</button>${l.task.resources?`<button type="button" class="btn small ghost" id="importRes">Перенести из карточки «Ресурсы»</button>`:""}</div></div>
+ <div class="panel"><div class="field"><label for="f-people">Люди: кого привлечь</label><textarea id="f-people" class="sticky" data-bind="res.people" placeholder="Коллеги, мастер п/о, социальные партнёры, представители производства">${esc(l.res.people)}</textarea></div></div>${navRow()}`};
+VIEWS[9]=()=>{const l=L();const dur=parseFloat(l.task.duration)||0;return `${head("Шаг 9","Составьте план урока","Под карточкой «Хронология» получается вертикальный график занятия: все значимые этапы и действия на каждом из них. Сверяйте его с карточкой «Длительность». Столбцы совпадают с формой поурочного плана по приказу № 130.")}
+ ${pcard(7)}
+ <div class="panel"><div class="sum" id="tsum"></div><div class="tbar" id="tbar" aria-hidden="true"></div>
+ <div class="tl-wrap"><table class="tline"><thead><tr><th style="width:70px">Время</th><th style="width:76px">Мин</th><th>Этап</th><th>Деятельность педагога</th><th>Деятельность обучающихся</th><th>Оценивание</th><th>Ресурсы</th><th style="width:70px"></th></tr></thead>
+ <tbody>${l.timeline.map((r,i)=>`<tr><td class="clock" data-clock="${i}"></td><td><input class="min" id="tm-${i}" type="number" min="0" inputmode="numeric" data-tl="${i}" data-f="min" value="${esc(r.min)}"></td>
+ ${["stage","teacher","students","assess","res"].map(f=>`<td><textarea id="t${f}-${i}" data-tl="${i}" data-f="${f}" rows="3">${esc(r[f])}</textarea></td>`).join("")}
+ <td style="white-space:nowrap"><button type="button" class="icon-btn" data-tup="${i}" aria-label="Выше" style="color:var(--muted)">↑</button><button type="button" class="icon-btn" data-tdel="${i}" aria-label="Удалить этап">✕</button></td></tr>`).join("")}</tbody></table></div>
+ ${!l.timeline.length?`<div class="hint">Этапов пока нет. Создайте черновик по шагам выбранного метода обучения или добавьте этапы вручную.</div>`:""}
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn small" id="addRow">+ Этап</button><button type="button" class="btn small ghost" id="draftRows">Черновик по шагам метода${dur?` (${dur} мин)`:""}</button></div></div>${navRow()}`};
+function updTimeSum(){const l=L();const tot=totalMin(),dur=parseFloat(l.task.duration)||0;
+ const el=$("#tsum");if(!el)return;
+ el.innerHTML=`<span>Итого по этапам: <span class="pill ${dur&&tot===dur?"ok":"warn"}">${tot} мин</span></span><span class="hint">Длительность из шага 1: ${dur?dur+" мин":"не указана"}${dur&&tot!==dur?(tot<dur?` · осталось ${dur-tot} мин`:` · превышение на ${tot-dur} мин`):""}</span>`;
+ let acc=0;document.querySelectorAll("[data-clock]").forEach(td=>{const i=+td.dataset.clock;td.textContent=`${acc}–${acc+(parseFloat(l.timeline[i].min)||0)}′`;acc+=parseFloat(l.timeline[i].min)||0});
+ const base=Math.max(tot,dur)||1;const pal=["var(--dig)","var(--ent2)","var(--grn)","var(--life)","var(--tr)","var(--dig2)","var(--ent)","var(--grn2)"];
+ $("#tbar").innerHTML=l.timeline.map((r,i)=>`<span style="width:${(parseFloat(r.min)||0)/base*100}%;background:${pal[i%pal.length]}" title="${esc(r.stage)}"></span>`).join("")}
+after[9]=updTimeSum;
+
+VIEWS[10]=()=>`${head("Итог","Готовый план занятия","Всё, что вы разложили по карточкам, собрано в один документ. Скачайте его файлом Word или скопируйте в любой редактор.")}
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn primary" id="wordBtn">Скачать в Word (.docx)</button><button type="button" class="btn" id="copyPlan">Копировать план</button><button type="button" class="btn" id="copyText">Копировать как текст</button></div>
+ ${missing()}<div class="doc" id="doc">${planHTML()}</div>${navRow()}`;
+function missing(){const m=STEPS.slice(0,9).filter(s=>s.id!==2&&!stepDone(s.id));return m.length?`<div class="note"><b>Не заполнено:</b><span>${m.map(s=>`<button type="button" class="code-chip" data-step="${s.id}">${s.id}. ${s.t}</button>`).join(" ")}</span></div>`:""}
+function v(x){return x?esc(x):`<span class="empty-v">не заполнено</span>`}
+function planHTML(){const l=L();const t=l.task;
+ const comps=l.comps.map(c=>CBY[c]).filter(Boolean);
+ const syms=Object.keys(SYM).filter(k=>(l.trans||[]).includes(k)).map(s=>SYM[s].n);
+ const ml=(ids,lib)=>ids.map(id=>lib[id].n).join(", ");
+ const h=l.head||{};const fd=d=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||"");return m?`${m[3]}.${m[2]}.${m[1]}`:(d||"")};
+ return `<div style="text-align:center"><div class="eyebrow">Приказ МОН РК № 130</div><h2 class="dt">Краткосрочный (поурочный) план</h2></div>
+ <section><div class="tbl"><table class="p130"><tbody>
+ <tr><th>Раздел / модуль</th><td colspan="3">${v(h.section)}</td></tr>
+ <tr><th>ФИО педагога</th><td colspan="3">${v(h.teacher)}</td></tr>
+ <tr><th>Дата</th><td>${v(fd(h.date))}</td><th>Группа / курс</th><td>${v(h.group||t.audience)}</td></tr>
+ <tr><th>Количество присутствующих</th><td>${v(h.present)}</td><th>Количество отсутствующих</th><td>${v(h.absent)}</td></tr>
+ <tr><th>Тема урока</th><td colspan="3">${v(t.topic)}</td></tr>
+ <tr><th>Цели обучения в соответствии с учебной программой</th><td colspan="3">${v(h.objectives)}</td></tr>
+ <tr><th>Цель урока</th><td colspan="3">${v(t.goal)}</td></tr>
+ </tbody></table></div></section>
+ <section><h3>Ход урока</h3>${l.timeline.length?(()=>{let a=0;return `<div class="tbl"><table><thead><tr><th>Этап урока / время</th><th>Действия педагога</th><th>Действия обучающихся</th><th>Оценивание</th><th>Ресурсы</th></tr></thead><tbody>${l.timeline.map(r=>{const m=parseFloat(r.min)||0;const s=`${a}–${a+m} мин`;a+=m;return `<tr><td><b>${esc(r.stage)}</b>\n${s}</td><td>${esc(r.teacher)}</td><td>${esc(r.students)}</td><td>${esc(r.assess)}</td><td>${esc(r.res)}</td></tr>`}).join("")}</tbody></table></div>`})():v("")}</section>
+ <div class="appx"><div class="eyebrow">Приложение</div><h2 class="dt" style="font-size:18px">Проектирование занятия по методике Scaffold</h2></div>
+ <section><h3>Задание</h3><dl class="kv">
+ <dt>Длительность</dt><dd>${t.duration?esc(t.duration)+" мин":v("")}</dd><dt>Целевая аудитория</dt><dd>${v(t.audience)}</dd><dt>Потребности</dt><dd>${v(t.needs)}</dd><dt>Место</dt><dd>${v(t.place)}</dd><dt>Связь с реальной жизнью</dt><dd>${v(t.real)}</dd></dl></section>
+ <section><h3>1. Компетенции</h3>${comps.length?`<div class="tbl"><table><thead><tr><th>Код</th><th>Компетенция</th><th>Рамка</th><th>Подсказка для занятия</th></tr></thead><tbody>${comps.map(c=>`<tr><td>${c.code}</td><td>${esc(c.name)}</td><td>${FW[c.fw].s}</td><td>${esc(c.hint)}</td></tr>`).join("")}</tbody></table></div>`:v("")}<p style="margin:8px 0 0"><b>Сквозные компетенции:</b> ${syms.length?esc(syms.join(", ")):v("")}</p></section>
+ <section><h3>2. Определение начального уровня</h3><dl class="kv"><dt>Метод оценки</dt><dd>${v(ml(l.diag.methods,ABY))}</dd><dt>Как проводится</dt><dd>${v(l.diag.note)}</dd></dl></section>
+ <section><h3>3. Метод обучения</h3><dl class="kv"><dt>Метод(ы)</dt><dd>${v([ml(l.teach.methods,TBY),l.teach.custom].filter(Boolean).join("; "))}</dd></dl></section>
+ <section><h3>4. Ожидаемые результаты / индикаторы</h3><dl class="kv"><dt>Конечный продукт</dt><dd>${v(l.results.product)}</dd><dt>Индикаторы</dt><dd>${l.results.indicators.filter(Boolean).length?l.results.indicators.filter(Boolean).map(i=>"• "+esc(i)).join("\n"):v("")}</dd><dt>Критерии</dt><dd>${v(l.results.criteria)}</dd></dl></section>
+ <section><h3>5. Метод оценки</h3><dl class="kv"><dt>Метод(ы)</dt><dd>${v(ml(l.assess.methods,ABY))}</dd><dt>Как проводится</dt><dd>${v(l.assess.note)}</dd></dl></section>
+ <section><h3>6. Ресурсы</h3><dl class="kv"><dt>Материалы и оборудование</dt><dd>${l.res.items.length?l.res.items.map(r=>(r.done?"☑ ":"☐ ")+esc(r.t)).join("\n"):v(t.resources)}</dd><dt>Люди</dt><dd>${v(l.res.people)}</dd></dl></section>`}
+function planText(){const d=document.createElement("div");d.innerHTML=planHTML();
+ d.querySelectorAll("tr").forEach(tr=>{tr.querySelectorAll("td,th").forEach((c,i)=>{if(i)c.prepend(" | ")});tr.append("\n")});
+ d.querySelectorAll("dt").forEach(x=>x.append(": "));d.querySelectorAll("dd,h3,h2,p,.eyebrow").forEach(x=>x.append("\n"));d.querySelectorAll("section").forEach(x=>x.prepend("\n"));
+ return d.textContent.replace(/\n{3,}/g,"\n\n").trim()}
+
+/* ===================== EVENTS ===================== */
+document.addEventListener("click",e=>{
+ const b=e.target.closest("button");if(!b)return;const l=L();
+ if(b.dataset.step){go(+b.dataset.step);return}
+ if(b.dataset.dur){l.task.duration=b.dataset.dur;save();render();return}
+ if(b.dataset.fw){ui.fw=b.dataset.fw;render();return}
+ if(b.dataset.trans){const k=b.dataset.trans;l.trans=l.trans.includes(k)?l.trans.filter(x=>x!==k):[...l.trans,k];save();const y=window.scrollY;render();window.scrollTo({top:y});return}
+ if(b.dataset.sym){ui.sym=ui.sym===b.dataset.sym?null:b.dataset.sym;if(ui.sym&&!l.trans.includes(ui.sym)){l.trans=[...l.trans,ui.sym];save();toast(`«${SYM[ui.sym].n}» отмечена как сквозная компетенция урока`)}render();return}
+ if(b.dataset.toggle){const c=b.dataset.toggle;l.comps=l.comps.includes(c)?l.comps.filter(x=>x!==c):[...l.comps,c];save();const y=window.scrollY;render();window.scrollTo({top:y});return}
+ if(b.dataset.unsel){l.comps=l.comps.filter(x=>x!==b.dataset.unsel);save();render();return}
+ if(b.dataset.goto){const c=b.dataset.goto;if(step!==3){go(3)}ui.fw="all";ui.sym=null;ui.q="";ui.onlySel=false;render();const el=document.getElementById("card-"+c.replace(".","-"));if(el){el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")}return}
+ if(b.dataset.pick){const arr=getPath(l,b.dataset.pick),id=b.dataset.id;setPath(l,b.dataset.pick,arr.includes(id)?arr.filter(x=>x!==id):[...arr,id]);save();const y=window.scrollY;render();window.scrollTo({top:y});return}
+ if(b.id==="randBtn"){const pool=C.filter(c=>!l.comps.includes(c.code)&&(ui.fw==="all"||c.fw===ui.fw));if(!pool.length)return;const c=pool[Math.floor(Math.random()*pool.length)];ui.q="";ui.onlySel=false;render();const el=document.getElementById("card-"+c.code.replace(".","-"));if(el){el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.add("flash")}toast(`Случайная карточка: ${c.code} ${c.name}`);return}
+ if(b.id==="addInd"){l.results.indicators.push("");save();render();const i=l.results.indicators.length-1;document.getElementById("ind-"+i)?.focus();return}
+ if(b.dataset.delind){l.results.indicators.splice(+b.dataset.delind,1);if(!l.results.indicators.length)l.results.indicators=[""];save();render();return}
+ if(b.id==="addRes"){l.res.items.push({t:"",done:false});save();render();document.getElementById("rt-"+(l.res.items.length-1))?.focus();return}
+ if(b.dataset.rdel){l.res.items.splice(+b.dataset.rdel,1);save();render();return}
+ if(b.id==="importRes"){const have=new Set(l.res.items.map(r=>r.t.trim().toLowerCase()));const add=l.task.resources.split(/\n|;|,(?![^(]*\))/).map(s=>s.trim()).filter(s=>s&&!have.has(s.toLowerCase()));add.forEach(t=>l.res.items.push({t,done:false}));save();render();toast(add.length?`Добавлено: ${add.length}`:"Всё уже в списке");return}
+ if(b.id==="addRow"){l.timeline.push({min:"",stage:"",teacher:"",students:"",assess:"",res:""});save();render();return}
+ if(b.dataset.tdel){l.timeline.splice(+b.dataset.tdel,1);save();render();return}
+ if(b.dataset.tup){const i=+b.dataset.tup;if(i>0){[l.timeline[i-1],l.timeline[i]]=[l.timeline[i],l.timeline[i-1]];save();render()}return}
+ if(b.id==="draftRows"){draftTimeline();return}
+ if(b.id==="wordBtn"||b.id==="wordTop"){downloadDocx();return}
+ if(b.id==="copyPlan"){copyPlan(true);return}
+ if(b.id==="copyText"){copyPlan(false);return}
+});
+document.addEventListener("input",e=>{
+ const t=e.target,l=L();
+ if(t.dataset.bind){setPath(l,t.dataset.bind,t.value);save();if(t.dataset.bind==="task.topic")renderLessons();if(t.dataset.bind==="task.duration")document.querySelectorAll("[data-dur]").forEach(x=>x.classList.toggle("on",x.dataset.dur===t.value));renderSteps();return}
+ if(t.dataset.ind!==undefined){l.results.indicators[+t.dataset.ind]=t.value;save();renderSteps();return}
+ if(t.dataset.rtext!==undefined){l.res.items[+t.dataset.rtext].t=t.value;save();return}
+ if(t.dataset.tl!==undefined){l.timeline[+t.dataset.tl][t.dataset.f]=t.value;save();if(t.dataset.f==="min")updTimeSum();return}
+});
+document.addEventListener("change",e=>{const t=e.target;if(t.dataset.rdone!==undefined){L().res.items[+t.dataset.rdone].done=t.checked;save();render()}});
+
+function draftTimeline(){const l=L();
+ const proceed=()=>{const dur=parseFloat(l.task.duration)||90;const m=TBY[l.teach.methods[0]];
+  const diag=l.diag.methods.map(id=>ABY[id].n).join(", ")||"Диагностика";const asm=l.assess.methods.map(id=>ABY[id].n).join(", ");
+  const core=m?m.s:["Постановка задачи","Основная деятельность","Представление результатов"];
+  const rows=[{stage:"Начало. Определение начального уровня",teacher:l.diag.note||"Проводит диагностику исходного уровня.",students:"",assess:diag,res:"",w:1.2}];
+  core.forEach((s,i)=>rows.push({stage:m?`${m.n.split(" ")[0]}: шаг ${i+1}`:s,teacher:"",students:m?s:"",assess:i===core.length-2?asm:"",res:"",w:i===2||i===3?1.6:1.1}));
+  rows.push({stage:"Рефлексия и итоги",teacher:"Подводит итоги по критериям и индикаторам.",students:"Оценивают свой прогресс.",assess:asm||"Самоанализ",res:"",w:1});
+  const W=rows.reduce((a,r)=>a+r.w,0);let left=dur;
+  l.timeline=rows.map((r,i)=>{let mm=i===rows.length-1?left:Math.max(5,Math.round(dur*r.w/W/5)*5);left-=mm;const{w,...rest}=r;return{min:String(mm),...rest}});
+  save();render();toast("Черновик создан — отредактируйте этапы")};
+ if(l.timeline.length){confirmBox("Заменить текущую хронологию черновиком? Текущие этапы будут удалены.","Заменить",proceed)}else proceed()}
+
+function confirmBox(msg,yes,fn){const bg=document.createElement("div");bg.className="modal-bg";bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><div>${esc(msg)}</div><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn" data-x>Отмена</button><button type="button" class="btn primary" data-y>${esc(yes)}</button></div></div>`;
+ document.body.appendChild(bg);bg.querySelector("[data-y]").focus();bg.addEventListener("click",e=>{if(e.target.closest("[data-y]")){e.stopPropagation();bg.remove();fn()}else if(e.target.closest("[data-x]")||e.target===bg){e.stopPropagation();bg.remove()}})}
+
+async function copyPlan(rich){const html=`<div style="font-family:Arial,sans-serif">${planHTML().replace(/<span class="empty-v">не заполнено<\/span>/g,"—")}</div>`;const txt=planText();
+ try{if(rich&&window.ClipboardItem){await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([txt],{type:"text/plain"})})])}else{await navigator.clipboard.writeText(txt)}toast("План скопирован — вставьте его в документ")}
+ catch(err){try{await navigator.clipboard.writeText(txt);toast("Скопирован как текст")}catch(e2){const r=document.createRange();r.selectNodeContents($("#doc"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Текст выделен — нажмите Ctrl+C")}}}
+
+/* lessons */
+$("#lessonSel").addEventListener("change",e=>{DB.cur=e.target.value;try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(x){}render()});
+$("#newBtn").addEventListener("click",()=>{const n=blankLesson();DB.lessons.push(n);DB.cur=n.id;save();go(1);toast("Новый урок создан")});
+$("#dupBtn").addEventListener("click",()=>{const c=JSON.parse(JSON.stringify(L()));c.id=uid();c.example=false;c.task.topic=(c.task.topic?"Копия — "+c.task.topic:"");DB.lessons.push(c);DB.cur=c.id;save();render();toast("Копия создана")});
+$("#delBtn").addEventListener("click",()=>confirmBox(`Удалить урок «${lessonName(L())}»? Это нельзя отменить.`,"Удалить",()=>{DB.lessons=DB.lessons.filter(l=>l.id!==DB.cur);if(!DB.lessons.length){const n=blankLesson();DB.lessons.push(n)}DB.cur=DB.lessons[0].id;save();render();toast("Урок удалён")}));
+$("#ioBtn").addEventListener("click",()=>{const bg=document.createElement("div");bg.className="modal-bg";
+ bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h2 style="font-size:17px">Резервная копия уроков</h2><div class="hint">Уроки хранятся только в этом браузере на этом компьютере. Нажмите «Сохранить в файл», чтобы получить файл резервной копии (.json) и перенести уроки на другой компьютер. Чтобы восстановить, нажмите «Открыть файл…» или вставьте код в поле и нажмите «Загрузить».</div>
+ <textarea id="ioText" class="input">${esc(JSON.stringify(DB.lessons))}</textarea>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn" data-x>Закрыть</button><button type="button" class="btn" data-file>Сохранить в файл</button><button type="button" class="btn" data-open>Открыть файл…</button><input type="file" id="ioFile" accept=".json,application/json" hidden><button type="button" class="btn" data-copy>Копировать</button><button type="button" class="btn primary" data-load>Загрузить</button></div></div>`;
+ document.body.appendChild(bg);const ta=bg.querySelector("#ioText");
+ bg.addEventListener("click",async e=>{if(e.target===bg||e.target.closest("[data-x]")){bg.remove();return}
+  if(e.target.closest("[data-file]")){downloadBlob(new Blob([ta.value],{type:"application/json"}),"Scaffold_уроки_"+new Date().toISOString().slice(0,10)+".json");toast("Файл резервной копии сохранён")}
+  if(e.target.closest("[data-open]")){const fi=bg.querySelector("#ioFile");fi.onchange=()=>{const f=fi.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{ta.value=r.result;bg.querySelector("[data-load]").click()};r.readAsText(f,"utf-8")};fi.click()}
+  if(e.target.closest("[data-copy]")){try{await navigator.clipboard.writeText(ta.value);toast("Скопировано")}catch(x){ta.select();toast("Выделено — нажмите Ctrl+C")}}
+  if(e.target.closest("[data-load]")){try{const arr=JSON.parse(ta.value);if(!Array.isArray(arr)||!arr.every(x=>x&&x.task&&x.id))throw 0;const ids=new Set(DB.lessons.map(l=>l.id));arr.forEach(x=>{if(ids.has(x.id))x.id=uid();DB.lessons.push(x)});DB.cur=arr[0].id;save();bg.remove();render();toast(`Загружено уроков: ${arr.length}`)}catch(x){toast("Код не распознан. Вставьте его целиком, без изменений.")}}})});
+
+/* ===================== WORD (.docx) — генерация без интернета ===================== */
+function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function zip(files){const enc=new TextEncoder();const parts=[],central=[];let off=0;const d=new Date();
+ const dt=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xFFFF, dd=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF;
+ for(const [name,str] of files){const nb=enc.encode(name),data=enc.encode(str),crc=crc32(data);
+  const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0,true);h.setUint16(8,0,true);h.setUint16(10,dt,true);h.setUint16(12,dd,true);h.setUint32(14,crc,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,nb.length,true);h.setUint16(28,0,true);
+  parts.push(new Uint8Array(h.buffer),nb,data);
+  const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0,true);c.setUint16(10,0,true);c.setUint16(12,dt,true);c.setUint16(14,dd,true);c.setUint32(16,crc,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);c.setUint16(28,nb.length,true);c.setUint32(42,off,true);
+  central.push(new Uint8Array(c.buffer),nb);off+=30+nb.length+data.length}
+ const csize=central.reduce((a,b)=>a+b.length,0);const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,csize,true);e.setUint32(16,off,true);
+ return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"})}
+const X=s=>String(s??"").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function wr(text,o={}){const pr=(o.b?"<w:b/><w:bCs/>":"")+(o.i?"<w:i/><w:iCs/>":"")+(o.caps?"<w:caps/>":"")+(o.color?`<w:color w:val="${o.color}"/>`:"")+(o.sz?`<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/>`:"");
+ return `<w:r>${pr?`<w:rPr>${pr}</w:rPr>`:""}${String(text??"").split("\n").map((l,k)=>(k?"<w:br/>":"")+`<w:t xml:space="preserve">${X(l)}</w:t>`).join("")}</w:r>`}
+function wp(runs,o={}){const pr=(o.style?`<w:pStyle w:val="${o.style}"/>`:"")+(o.keep?"<w:keepNext/>":"")+(o.after!=null||o.before!=null?`<w:spacing ${o.before!=null?`w:before="${o.before}" `:""}${o.after!=null?`w:after="${o.after}"`:""}/>`:"")+(o.ind?`<w:ind w:left="${o.ind}" w:hanging="${o.hang||0}"/>`:"")+(o.jc?`<w:jc w:val="${o.jc}"/>`:"");
+ return `<w:p>${pr?`<w:pPr>${pr}</w:pPr>`:""}${Array.isArray(runs)?runs.join(""):(String(runs).startsWith("<w:r")?runs:wr(runs))}</w:p>`}
+function wcell(content,w,o={}){const paras=(Array.isArray(content)?content:[content]).map(c=>typeof c==="string"&&c.startsWith("<w:p")?c:wp(wr(c===""||c==null?"—":c,{b:o.b,sz:o.sz}),{after:0})).join("")||wp("");
+ return `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${o.fill?`<w:shd w:val="clear" w:color="auto" w:fill="${o.fill}"/>`:""}</w:tcPr>${paras}</w:tc>`}
+function wtable(widths,rows,o={}){const tot=widths.reduce((a,b)=>a+b,0);const bd=["top","left","bottom","right","insideH","insideV"].map(k=>`<w:${k} w:val="single" w:sz="4" w:space="0" w:color="9AA3AF"/>`).join("");
+ const tr=rows.map((r,ri)=>{const head=o.header&&ri===0;return `<w:tr>${head?"<w:trPr><w:cantSplit/><w:tblHeader/></w:trPr>":"<w:trPr><w:cantSplit/></w:trPr>"}${r.map((c,ci)=>wcell(c,widths[ci],{b:head||(o.keyCol&&ci===0),fill:head?"DDF1F0":(o.keyCol&&ci===0?"F2F4F7":null),sz:head?20:(o.sz||null)})).join("")}</w:tr>`}).join("");
+ return `<w:tbl><w:tblPr><w:tblW w:w="${tot}" w:type="dxa"/><w:tblBorders>${bd}</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="60" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${widths.map(w=>`<w:gridCol w:w="${w}"/>`).join("")}</w:tblGrid>${tr}</w:tbl>`+wp("",{after:60})}
+function wtable130(W,h,t,fd,dash){const c1=2300,c2=2519,c3=2300,c4=W-c1-c2-c3;const bd=["top","left","bottom","right","insideH","insideV"].map(k=>`<w:${k} w:val="single" w:sz="4" w:space="0" w:color="9AA3AF"/>`).join("");
+ const lab=(x,w)=>wcell(x,w,{b:true,fill:"F2F4F7",sz:22});
+ const span=(x,w)=>`<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/><w:gridSpan w:val="3"/></w:tcPr>${wp(wr(dash(x)),{after:0})}</w:tc>`;
+ const full=(k,x)=>`<w:tr><w:trPr><w:cantSplit/></w:trPr>${lab(k,c1)}${span(x,c2+c3+c4)}</w:tr>`;
+ const four=(k1,x1,k2,x2)=>`<w:tr><w:trPr><w:cantSplit/></w:trPr>${lab(k1,c1)}${wcell(dash(x1),c2)}${lab(k2,c3)}${wcell(dash(x2),c4)}</w:tr>`;
+ return `<w:tbl><w:tblPr><w:tblW w:w="${W}" w:type="dxa"/><w:tblBorders>${bd}</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="60" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid><w:gridCol w:w="${c1}"/><w:gridCol w:w="${c2}"/><w:gridCol w:w="${c3}"/><w:gridCol w:w="${c4}"/></w:tblGrid>`+
+  full("Раздел / модуль",h.section)+full("ФИО педагога",h.teacher)+four("Дата",fd(h.date),"Группа / курс",h.group||t.audience)+four("Количество присутствующих",h.present,"Количество отсутствующих",h.absent)+full("Тема урока",t.topic)+full("Цели обучения в соответствии с учебной программой",h.objectives)+full("Цель урока",t.goal)+`</w:tbl>`+wp("",{after:60})}
+function buildDocXml(){const l=L(),t=l.task,W=9638,dash=v=>v&&String(v).trim()?v:"—";
+ const names=(ids,lib)=>ids.map(id=>lib[id].n).join(", ");
+ const comps=l.comps.map(c=>CBY[c]).filter(Boolean);const syms=Object.keys(SYM).filter(k=>(l.trans||[]).includes(k)).map(s=>SYM[s].n);
+ const H=txt=>wp(wr(txt),{style:"Heading2",keep:true});
+ const kv=rows=>wtable([2700,W-2700],rows.map(([k,v])=>[k,dash(v)]),{keyCol:true});
+ let b="";const h=l.head||{};const fd=d=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||"");return m?`${m[3]}.${m[2]}.${m[1]}`:(d||"")};
+ b+=wp(wr("Краткосрочный (поурочный) план",{b:true,sz:28}),{jc:"center",after:160});
+ const K=t=>({k:t});
+ b+=wtable130(W,h,t,fd,dash);
+ b+=wp(wr("Ход урока",{b:true}),{keep:true,before:120,after:80});
+ if(l.timeline.length){let a=0;b+=wtable([1750,2300,2300,1550,W-7900],[["Этап урока / время","Действия педагога","Действия обучающихся","Оценивание","Ресурсы"],...l.timeline.map(r=>{const m=parseFloat(r.min)||0;const s=`${a}–${a+m} мин`;a+=m;return [[wp([wr(dash(r.stage),{b:true,sz:21}),wr("\n"+s,{sz:21})],{after:0})],r.teacher,r.students,r.assess,r.res]})],{header:true,sz:21});
+  b+=wp([wr("Итого: ",{b:true}),wr(`${totalMin()} мин`+(t.duration?` (запланировано ${t.duration} мин)`:""))]);}
+ else b+=wp("—");
+ b+=`<w:p><w:r><w:br w:type="page"/></w:r></w:p>`;
+ b+=wp(wr("Приложение · инструмент Scaffold",{caps:true,color:"0C8A87",sz:18,b:true}),{after:40});
+ b+=wp(wr("Проектирование занятия по методике Scaffold"),{style:"Title"});
+ b+=H("Задание");
+ b+=kv([["Длительность",t.duration?t.duration+" мин":""],["Целевая аудитория",t.audience],["Потребности",t.needs],["Место",t.place],["Связь с реальной жизнью",t.real]]);
+ b+=H("1. Компетенции");
+ if(comps.length){b+=wtable([900,2600,1300,W-4800],[["Код","Компетенция","Рамка","Подсказка для занятия"],...comps.map(c=>[c.code,c.name,FW[c.fw].s,c.hint])],{header:true,sz:21});
+}
+ else b+=wp("—");
+ b+=wp([wr("Сквозные компетенции: ",{b:true}),wr(syms.length?syms.join(", "):"—")]);
+ b+=H("2. Определение начального уровня");
+ b+=kv([["Метод оценки",names(l.diag.methods,ABY)],["Как проводится",l.diag.note]]);
+ b+=H("3. Метод обучения");
+ const tm=l.teach.methods.map(id=>TBY[id]);
+ b+=kv([["Метод(ы)",[names(l.teach.methods,TBY),l.teach.custom].filter(Boolean).join("; ")]]);
+ tm.forEach(m=>{b+=wp(wr(m.n+" — шаги метода:",{b:true}),{after:40,keep:true});m.s.forEach((s,i)=>b+=wp(wr(`${i+1}. ${s}`),{after:20,ind:360,hang:0}));b+=wp("",{after:40})});
+ b+=H("4. Ожидаемые результаты / индикаторы");
+ const inds=l.results.indicators.filter(Boolean);
+ b+=kv([["Конечный продукт",l.results.product],["Индикаторы",inds.map(i=>"• "+i).join("\n")],["Критерии оценивания",l.results.criteria]]);
+ b+=H("5. Метод оценки");
+ b+=kv([["Метод(ы)",names(l.assess.methods,ABY)],["Как проводится",l.assess.note]]);
+ b+=H("6. Ресурсы");
+ b+=kv([["Материалы и оборудование",l.res.items.length?l.res.items.map(r=>(r.done?"■ ":"□ ")+r.t).join("\n"):t.resources],["Люди",l.res.people]]);
+ b+=wp(wr("Составлено в конструкторе урока Scaffold · "+new Date().toLocaleDateString("ru-RU"),{i:true,color:"6B7280",sz:18}),{before:240});
+ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>${b}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`}
+const DOCX_STYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/><w:lang w:val="ru-RU" w:eastAsia="ru-RU" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="200"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="1A202B"/><w:sz w:val="34"/><w:szCs w:val="34"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="280" w:after="100"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="0C8A87"/><w:sz w:val="27"/><w:szCs w:val="27"/></w:rPr></w:style></w:styles>`;
+function downloadDocx(){try{
+ const files=[
+  ["[Content_Types].xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`],
+  ["_rels/.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`],
+  ["docProps/core.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${X(lessonName(L()))}</dc:title><dc:creator>Конструктор урока Scaffold</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString().slice(0,19)}Z</dcterms:created></cp:coreProperties>`],
+  ["word/_rels/document.xml.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
+  ["word/styles.xml",DOCX_STYLES],
+  ["word/document.xml",buildDocXml()]
+ ];
+ const base=((L().task.topic||"").split(/[.\n]/)[0].trim()||"урок").replace(/[\\/:*?"<>|]+/g,"").slice(0,60).trim();
+ downloadBlob(zip(files),`План_урока_${base.replace(/\s+/g,"_")}.docx`);toast("Документ Word скачан");
+}catch(err){console.error(err);toast("Не удалось создать документ: "+err.message)}}
+
+load();render();
+setSaved(storageOK?"Черновики сохраняются в этом браузере":"Сохранение недоступно — используйте резервную копию");
+</script>
+</body>
+</html>
